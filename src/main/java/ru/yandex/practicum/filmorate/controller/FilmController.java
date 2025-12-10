@@ -74,8 +74,7 @@ public class FilmController {
     private void validate(Film film) {
         LocalDate releaseDate = film.getReleaseDate();
         if (releaseDate != null && releaseDate.isBefore(BIRHDAY_OF_CINEMA)) {
-            String errorDescription = String.format("Дата релиза должна быть не раньше %s",
-                    BIRHDAY_OF_CINEMA.format(DateTimeFormatter.ISO_LOCAL_DATE));
+            String errorDescription = String.format("Дата релиза должна быть не раньше %s", BIRHDAY_OF_CINEMA);
             throwValidateExceptionWithLogging(errorDescription);
         }
     }
