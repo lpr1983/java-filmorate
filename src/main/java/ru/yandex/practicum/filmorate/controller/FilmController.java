@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,6 +13,7 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,22 +24,19 @@ import java.util.Map;
 public class FilmController {
     private Map<Integer, Film> films = new HashMap<>();
     private int filmCounter = 0;
+    public static final LocalDate BIRHDAY_OF_CINEMA = LocalDate.of(1895, 12, 28);
 
     @GetMapping
     public Collection<Film> all() {
+        log.info("all");
         return films.values();
     }
 
     @PostMapping
-    public Film create(@RequestBody Film newObject) {
+    public Film create(@Valid @RequestBody Film newObject) {
         log.info("create, input object {}", newObject);
 
-        try {
-            validate(newObject);
-        } catch (ValidationException exception) {
-            log.error(exception.getMessage(), exception);
-            throw exception;
-        }
+        validate(newObject);
 
         int newId = getNextId();
         newObject.setId(newId);
@@ -48,15 +47,10 @@ public class FilmController {
     }
 
     @PutMapping
-    public Film update(@RequestBody Film filmToUpdate) {
+    public Film update(@Valid @RequestBody Film filmToUpdate) {
         log.info("update, input object {}", filmToUpdate);
 
-        try {
-            validate(filmToUpdate);
-        } catch (ValidationException exception) {
-            log.error(exception.getMessage(), exception);
-            throw exception;
-        }
+        validate(filmToUpdate);
 
         int id = filmToUpdate.getId();
         Film storedObject = films.get(id);
@@ -78,23 +72,17 @@ public class FilmController {
     }
 
     private void validate(Film film) {
-        String filmName = film.getName();
-        if (filmName == null || filmName.isBlank()) {
-            throw new ValidationException("Название не может быть пустым");
-        }
-
-        String filmDescription = film.getDescription();
-        if (filmDescription != null && filmDescription.length() > 200) {
-            throw new ValidationException("Максимальная длина описания — 200 символов");
-        }
-
         LocalDate releaseDate = film.getReleaseDate();
-        if (releaseDate != null && releaseDate.isBefore(LocalDate.of(1895, 12, 28))) {
-            throw new ValidationException("Дата релиза должны быть не раньше 28 декабря 1895 года");
+        if (releaseDate != null && releaseDate.isBefore(BIRHDAY_OF_CINEMA)) {
+            String errorDescription = String.format("Дата релиза должна быть не раньше %s",
+                    BIRHDAY_OF_CINEMA.format(DateTimeFormatter.ISO_LOCAL_DATE));
+            throwValidateExceptionWithLogging(errorDescription);
         }
+    }
 
-        if (film.getDuration() <= 0) {
-            throw new ValidationException("Продолжительность фильма должна быть положительным числом");
-        }
+    private void throwValidateExceptionWithLogging(String errorDescription) {
+        ValidationException validationException = new ValidationException(errorDescription);
+        log.error(errorDescription, validationException);
+        throw validationException;
     }
 }
