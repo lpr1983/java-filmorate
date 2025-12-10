@@ -9,10 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,19 +24,13 @@ public class UserController {
 
     @GetMapping
     public Collection<User> all() {
+        log.info("all");
         return users.values();
     }
 
     @PostMapping
     public User create(@Valid @RequestBody User newUser) {
         log.info("create, input object: {}", newUser);
-
-        try {
-            validate(newUser);
-        } catch (ValidationException exception) {
-            log.error(exception.getMessage(), exception);
-            throw exception;
-        }
 
         int newId = getNextId();
         newUser.setId(newId);
@@ -47,20 +39,13 @@ public class UserController {
 
         users.put(newId, newUser);
 
-        log.info("output object: {}", newUser);
+        log.info("create, output object: {}", newUser);
         return newUser;
     }
 
     @PutMapping
     public User update(@Valid @RequestBody User userToUpdate) {
         log.info("update, input object: {}", userToUpdate);
-
-        try {
-            validate(userToUpdate);
-        } catch (ValidationException exception) {
-            log.error(exception.getMessage(), exception);
-            throw exception;
-        }
 
         int id = userToUpdate.getId();
         User storedObject = users.get(id);
@@ -75,7 +60,7 @@ public class UserController {
 
         users.put(id, userToUpdate);
 
-        log.info("output object: {}", userToUpdate);
+        log.info("update, output object: {}", userToUpdate);
         return userToUpdate;
     }
 
@@ -88,24 +73,5 @@ public class UserController {
     private int getNextId() {
         userCounter++;
         return userCounter;
-    }
-
-    private void validate(User userToValidate) {
-        String email = userToValidate.getEmail();
-        if (email == null || email.isBlank() || !email.contains("@")
-        ) {
-            throw new ValidationException("Электронная почта не может быть пустой и должна содержать символ @");
-        }
-
-        String login = userToValidate.getLogin();
-        if (login == null || login.isBlank() || login.contains(" ")
-        ) {
-            throw new ValidationException("Логин не может быть пустым или содержать пробелы");
-        }
-
-        LocalDate birthday = userToValidate.getBirthday();
-        if (birthday != null && birthday.isAfter(LocalDate.now())) {
-            throw new ValidationException("Дата рождения не может быть в будущем");
-        }
     }
 }
