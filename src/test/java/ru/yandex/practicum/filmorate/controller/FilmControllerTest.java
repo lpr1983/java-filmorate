@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.time.LocalDate;
 
@@ -15,7 +16,7 @@ class FilmControllerTest {
 
     @BeforeEach
     void setup() {
-        controller = new FilmController();
+        //controller = new FilmController(new FilmService());
     }
 
     @Test
@@ -36,10 +37,10 @@ class FilmControllerTest {
         film.setDescription("Desc");
         film.setDuration(100);
 
-        film.setReleaseDate(FilmController.BIRHDAY_OF_CINEMA.minusDays(1));
+        film.setReleaseDate(FilmService.BIRTHDAY_OF_CINEMA.minusDays(1));
         assertThrows(ValidationException.class, () -> controller.create(film));
 
-        film.setReleaseDate(FilmController.BIRHDAY_OF_CINEMA);
+        film.setReleaseDate(FilmService.BIRTHDAY_OF_CINEMA);
         assertDoesNotThrow(() -> controller.create(film));
 
         film.setReleaseDate(LocalDate.now().plusDays(1));
