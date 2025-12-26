@@ -8,9 +8,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @Slf4j
@@ -34,7 +32,6 @@ public class UserService {
         log.info("Create, input object: {}", newUser);
 
         processNameField(newUser);
-
         User createdUser = userStorage.create(newUser);
 
         log.info("Create, output object: {}", createdUser);
@@ -44,13 +41,9 @@ public class UserService {
     public User update(User userToUpdate) {
         log.info("Update, input object: {}", userToUpdate);
 
-        int id = userToUpdate.getId();
-        if (userStorage.getById(id).isEmpty()) {
-            throw new NotFoundException(String.format("Не найден элемент с id=%d", id));
-        }
+        checkUserExists(userToUpdate.getId());
 
         processNameField(userToUpdate);
-
         User updatedUser = userStorage.update(userToUpdate);
 
         log.info("Update, output object: {}", updatedUser);
@@ -59,6 +52,7 @@ public class UserService {
 
     public void deleteById(int id) {
         checkUserExists(id);
+
         userStorage.delete(id);
 
         log.info("User deleted: id={}", id);
@@ -66,6 +60,7 @@ public class UserService {
 
     public void addFriend(int userId, int friendId) {
         checkUsers(userId, friendId);
+
         userStorage.addFriend(userId, friendId);
 
         log.info("Friend added: userId={}, friendId={}", userId, friendId);
@@ -73,6 +68,7 @@ public class UserService {
 
     public void deleteFriend(int userId, int friendId) {
         checkUsers(userId, friendId);
+
         userStorage.deleteFriend(userId, friendId);
 
         log.info("Friend deleted: userId={}, friendId={}", userId, friendId);
@@ -80,6 +76,7 @@ public class UserService {
 
     public List<User> getFriends(int userId) {
         checkUserExists(userId);
+
         return userStorage.getFriends(userId);
     }
 
@@ -88,11 +85,7 @@ public class UserService {
 
         checkUsers(userId, otherId);
 
-        Set<User> friends1 = new HashSet<>(userStorage.getFriends(userId));
-        Set<User> friends2 = new HashSet<>(userStorage.getFriends(otherId));
-
-        return friends1.stream().
-                filter(friends2::contains).toList();
+        return userStorage.getCommonFriends(userId, otherId);
     }
 
     private void checkUsers(int userId, int friendId) {

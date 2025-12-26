@@ -88,6 +88,18 @@ public class InMemoryUserStorage implements UserStorage {
                 .toList();
     }
 
+    @Override
+    public List<User> getCommonFriends(int userId, int otherId) {
+        Set<Integer> friendsId1 = friends.getOrDefault(userId, Set.of());
+        Set<Integer> friendsId2 = friends.getOrDefault(otherId, Set.of());
+
+        return friendsId1.stream()
+                .filter(friendsId2::contains)
+                .map(users::get)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
     private int getNextId() {
         nextId++;
         return nextId;
