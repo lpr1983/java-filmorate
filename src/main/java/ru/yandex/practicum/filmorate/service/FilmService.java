@@ -9,16 +9,18 @@ import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.List;
 
 @Service
 @Slf4j
 public class FilmService {
-
     private final FilmStorage filmStorage;
+    private final UserService userService;
     public static final LocalDate BIRTHDAY_OF_CINEMA = LocalDate.of(1895, 12, 28);
 
-    public FilmService(FilmStorage filmStorage) {
+    public FilmService(FilmStorage filmStorage, UserService userService) {
         this.filmStorage = filmStorage;
+        this.userService = userService;
     }
 
     public Collection<Film> all() {
@@ -26,8 +28,8 @@ public class FilmService {
     }
 
     public Film getById(int id) {
-        return filmStorage.getById(id).
-                orElseThrow(() -> new NotFoundException("Не найден фильм с id: " + id));
+        return filmStorage.getById(id)
+                .orElseThrow(() -> new NotFoundException("Не найден фильм с id: " + id));
     }
 
     public Film create(Film newFilm) {
@@ -55,6 +57,41 @@ public class FilmService {
 
         log.info("output object: {}", updatedFilm);
         return updatedFilm;
+    }
+
+    public void deleteById(int id) {
+        checkFilmExists(id);
+        filmStorage.delete(id);
+    }
+
+    public void addLike(int id, int userId) {
+        userService.checkUserExists(userId);
+        checkFilmExists(id);
+
+        filmStorage.addLike(id, userId);
+
+        log.info("Like added: Id={}, userId={}", id, userId);
+    }
+
+    public void deleteLike(int id, int userId) {
+        userService.checkUserExists(userId);
+        checkFilmExists(id);
+
+        filmStorage.deleteLike(id, userId);
+
+        log.info("Like deleted: Id={}, userId={}", id, userId);
+    }
+
+    public List<Film> getPopular(int count) {
+        List<Film> popular = filmStorage.getPopular(count);
+
+        log.debug("getPopular, count = {}, resultSize = {}", count, popular.size());
+        return popular;
+    }
+
+    private void checkFilmExists(int id) {
+        filmStorage.getById(id)
+                .orElseThrow(() -> new NotFoundException("Не найден фильм с id:" + id));
     }
 
     private void validate(Film film) {

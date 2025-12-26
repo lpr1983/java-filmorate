@@ -1,8 +1,5 @@
-package ru.yandex.practicum.filmorate.controller;
+package ru.yandex.practicum.filmorate.controller.errors;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -29,17 +26,4 @@ public class ErrorHandler {
         return new ErrorResponse(ex.getMessage());
     }
 
-    @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handleAll(Exception ex) {
-        log.error("Unexpected error", ex);
-        return new ErrorResponse("Произошла непредвиденная ошибка");
-    }
-}
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-class ErrorResponse {
-    private String error;
 }

@@ -24,8 +24,8 @@ public class UserService {
     }
 
     public User getById(int id) {
-        return userStorage.getById(id).
-                orElseThrow(() -> new NotFoundException("Не найден пользователь с id: " + id));
+        return userStorage.getById(id)
+                .orElseThrow(() -> new NotFoundException("Не найден пользователь с id: " + id));
     }
 
     public User create(User newUser) {
@@ -96,9 +96,9 @@ public class UserService {
         checkUserExists(friendId);
     }
 
-    private void checkUserExists(int userId) {
-        userStorage.getById(userId).
-                orElseThrow(() -> new NotFoundException("Не найден пользователь с id:" + userId));
+    public void checkUserExists(int userId) {
+        userStorage.getById(userId)
+                .orElseThrow(() -> new NotFoundException("Не найден пользователь с id:" + userId));
     }
 
     private void processNameField(User user) {
