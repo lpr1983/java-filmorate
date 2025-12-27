@@ -83,6 +83,10 @@ public class FilmService {
     }
 
     public List<Film> getPopular(int count) {
+        if (count <= 0) {
+            throw new ValidationException("Параметр count должен быть больше 0");
+        }
+
         List<Film> popular = filmStorage.getPopular(count);
 
         log.debug("getPopular, count = {}, resultSize = {}", count, popular.size());
