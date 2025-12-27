@@ -4,6 +4,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 
@@ -15,7 +21,12 @@ class FilmControllerTest {
 
     @BeforeEach
     void setup() {
-        controller = new FilmController();
+        UserStorage userStorage = new InMemoryUserStorage();
+        UserService userService = new UserService(userStorage);
+        FilmStorage filmStorage = new InMemoryFilmStorage();
+        FilmService filmService = new FilmService(filmStorage, userService);
+
+        controller = new FilmController(filmService);
     }
 
     @Test
@@ -36,10 +47,10 @@ class FilmControllerTest {
         film.setDescription("Desc");
         film.setDuration(100);
 
-        film.setReleaseDate(FilmController.BIRHDAY_OF_CINEMA.minusDays(1));
+        film.setReleaseDate(FilmService.BIRTHDAY_OF_CINEMA.minusDays(1));
         assertThrows(ValidationException.class, () -> controller.create(film));
 
-        film.setReleaseDate(FilmController.BIRHDAY_OF_CINEMA);
+        film.setReleaseDate(FilmService.BIRTHDAY_OF_CINEMA);
         assertDoesNotThrow(() -> controller.create(film));
 
         film.setReleaseDate(LocalDate.now().plusDays(1));
