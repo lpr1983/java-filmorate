@@ -1,9 +1,13 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dto.UserCreateDto;
+import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -15,7 +19,7 @@ import java.util.List;
 public class UserService {
     private final UserStorage userStorage;
 
-    public UserService(UserStorage userStorage) {
+    public UserService(@Qualifier("userDbStorage") UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
@@ -28,14 +32,16 @@ public class UserService {
                 .orElseThrow(() -> new NotFoundException("Не найден пользователь с id: " + id));
     }
 
-    public User create(User newUser) {
-        log.info("Create, input object: {}", newUser);
+    public UserDto create(UserCreateDto newUserDto) {
+        log.info("Create, input object: {}", newUserDto);
+
+        User newUser = UserMapper.createDtoToUser(newUserDto);
 
         processNameField(newUser);
         User createdUser = userStorage.create(newUser);
 
         log.info("Create, output object: {}", createdUser);
-        return createdUser;
+        return UserMapper.userToDto(createdUser);
     }
 
     public User update(User userToUpdate) {

@@ -2,7 +2,8 @@ package ru.yandex.practicum.filmorate.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.dto.UserCreateDto;
+import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -24,7 +25,7 @@ class UserControllerTest {
 
     @Test
     void testValidUserCreation() {
-        User user = new User();
+        UserCreateDto user = new UserCreateDto();
         user.setEmail("test@example.com");
         user.setLogin("login");
         user.setName("Name");
@@ -35,13 +36,13 @@ class UserControllerTest {
 
     @Test
     void testNameDefaultsToLogin() {
-        User user = new User();
+        UserCreateDto user = new UserCreateDto();
         user.setEmail("test@example.com");
         user.setLogin("login");
         user.setBirthday(LocalDate.of(2000, 1, 1));
         user.setName("");
 
-        User created = controller.create(user);
+        UserDto created = controller.create(user);
         assertEquals("login", created.getName());
     }
 }
