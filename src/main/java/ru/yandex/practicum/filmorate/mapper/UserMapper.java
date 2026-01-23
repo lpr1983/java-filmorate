@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import ru.yandex.practicum.filmorate.dto.UserCreateDto;
 import ru.yandex.practicum.filmorate.dto.UserDto;
+import ru.yandex.practicum.filmorate.dto.UserUpdateDto;
 import ru.yandex.practicum.filmorate.model.User;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -27,4 +28,12 @@ public class UserMapper {
         dto.setBirthday(user.getBirthday());
         return dto;
     }
+
+    public static void updateUserFromDto(User user, UserUpdateDto dto) {
+        if (dto.getEmail() != null) user.setEmail(dto.getEmail());
+        if (dto.getLogin() != null) user.setLogin(dto.getLogin());
+        if (dto.getName() != null) user.setName(dto.getName());
+        if (dto.getBirthday() != null) user.setBirthday(dto.getBirthday());
+    }
+
 }

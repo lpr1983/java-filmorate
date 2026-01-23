@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dto.UserCreateDto;
 import ru.yandex.practicum.filmorate.dto.UserDto;
+import ru.yandex.practicum.filmorate.dto.UserUpdateDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
@@ -44,16 +45,16 @@ public class UserService {
         return UserMapper.userToDto(createdUser);
     }
 
-    public User update(User userToUpdate) {
-        log.info("Update, input object: {}", userToUpdate);
+    public UserDto update(UserUpdateDto userToUpdateDto) {
+        log.info("Update, input object: {}", userToUpdateDto);
 
-        checkUserExists(userToUpdate.getId());
+        User userToUpdate = checkUserExists(userToUpdateDto.getId());
 
-        processNameField(userToUpdate);
+        UserMapper.updateUserFromDto(userToUpdate, userToUpdateDto);
         User updatedUser = userStorage.update(userToUpdate);
 
         log.info("Update, output object: {}", updatedUser);
-        return updatedUser;
+        return UserMapper.userToDto(updatedUser);
     }
 
     public void deleteById(int id) {
@@ -102,8 +103,8 @@ public class UserService {
         checkUserExists(friendId);
     }
 
-    public void checkUserExists(int userId) {
-        userStorage.getById(userId)
+    public User checkUserExists(int userId) {
+        return userStorage.getById(userId)
                 .orElseThrow(() -> new NotFoundException("Не найден пользователь с id:" + userId));
     }
 

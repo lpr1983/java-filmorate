@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-@Component
+@Component("inMemoryUserStorage")
 public class InMemoryUserStorage implements UserStorage {
     private final Map<Integer, User> users = new HashMap<>();
     private final Map<Integer, Set<Integer>> friends = new HashMap<>();
