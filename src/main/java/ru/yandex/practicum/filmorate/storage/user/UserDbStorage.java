@@ -3,7 +3,7 @@ package ru.yandex.practicum.filmorate.storage.user;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.exception.InternalServerException;
+import ru.yandex.practicum.filmorate.exception.DbStorageException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.BaseRepository;
 
@@ -12,6 +12,7 @@ import java.util.Optional;
 
 @Repository("userDbStorage")
 public class UserDbStorage extends BaseRepository<User> implements UserStorage {
+    private static final String FIND_ALL_QUERY = "SELECT * FROM users";
     private static final String INSERT_QUERY = "INSERT INTO users(email, login, name, birthday) VALUES (?, ?, ?, ?)";
     private static final String FIND_BY_ID = "SELECT * FROM users WHERE id = ?";
     private static final String UPDATE_QUERY = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
@@ -22,7 +23,7 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
 
     @Override
     public List<User> getAll() {
-        return List.of();
+        return findMany(FIND_ALL_QUERY);
     }
 
     @Override
@@ -54,7 +55,7 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
                 userId);
 
         return getById(userId).
-                orElseThrow(()-> new InternalServerException("После обновления не найден пользователь с id:" + userId));
+                orElseThrow(()-> new DbStorageException("После обновления не найден пользователь с id:" + userId));
     }
 
     @Override

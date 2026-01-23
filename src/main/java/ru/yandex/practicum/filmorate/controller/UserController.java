@@ -30,7 +30,7 @@ public class UserController {
     }
 
     @GetMapping
-    public Collection<User> all() {
+    public Collection<UserDto> all() {
         return userService.all();
     }
 

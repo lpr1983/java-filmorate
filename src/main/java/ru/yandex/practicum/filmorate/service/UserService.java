@@ -10,10 +10,12 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.mapper.UserRowMapper;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -24,8 +26,8 @@ public class UserService {
         this.userStorage = userStorage;
     }
 
-    public Collection<User> all() {
-        return userStorage.getAll();
+    public Collection<UserDto> all() {
+        return userStorage.getAll().stream().map(UserMapper::userToDto).toList();
     }
 
     public User getById(int id) {
