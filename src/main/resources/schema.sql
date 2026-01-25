@@ -5,3 +5,12 @@ CREATE TABLE IF NOT EXISTS users (
   name varchar(100),
   birthday date NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS friends (
+    user_id   INT NOT NULL,
+    friend_id INT NOT NULL,
+    PRIMARY KEY (user_id, friend_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE,
+    CHECK (user_id <> friend_id)
+);
