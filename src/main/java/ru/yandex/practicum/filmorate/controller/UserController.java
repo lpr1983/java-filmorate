@@ -11,9 +11,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import ru.yandex.practicum.filmorate.dto.UserCreateDto;
-import ru.yandex.practicum.filmorate.dto.UserDto;
-import ru.yandex.practicum.filmorate.dto.UserUpdateDto;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
@@ -30,7 +27,7 @@ public class UserController {
     }
 
     @GetMapping
-    public Collection<UserDto> all() {
+    public Collection<User> all() {
         return userService.all();
     }
 
@@ -41,7 +38,7 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserDto create(@Valid @RequestBody UserCreateDto newUser) {
+    public User create(@Valid @RequestBody User newUser) {
         return userService.create(newUser);
     }
 
@@ -53,7 +50,7 @@ public class UserController {
 
     @PutMapping
     @ResponseStatus(HttpStatus.OK)
-    public UserDto update(@Valid @RequestBody UserUpdateDto userToUpdate) {
+    public User update(@Valid @RequestBody User userToUpdate) {
         return userService.update(userToUpdate);
     }
 

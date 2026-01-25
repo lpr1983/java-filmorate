@@ -39,6 +39,10 @@ public class BaseRepository<T> {
         }
     }
 
+    protected void delete(String query, Object... params) {
+        jdbc.update(query, params);
+    }
+
     protected int insert(String query, Object... params) {
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         jdbc.update(connection -> {

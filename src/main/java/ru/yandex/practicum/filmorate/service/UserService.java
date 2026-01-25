@@ -3,19 +3,13 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dto.UserCreateDto;
-import ru.yandex.practicum.filmorate.dto.UserDto;
-import ru.yandex.practicum.filmorate.dto.UserUpdateDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.mapper.UserRowMapper;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -26,8 +20,8 @@ public class UserService {
         this.userStorage = userStorage;
     }
 
-    public Collection<UserDto> all() {
-        return userStorage.getAll().stream().map(UserMapper::userToDto).toList();
+    public Collection<User> all() {
+        return userStorage.getAll();
     }
 
     public User getById(int id) {
@@ -35,28 +29,26 @@ public class UserService {
                 .orElseThrow(() -> new NotFoundException("Не найден пользователь с id: " + id));
     }
 
-    public UserDto create(UserCreateDto newUserDto) {
-        log.info("Create, input object: {}", newUserDto);
-
-        User newUser = UserMapper.createDtoToUser(newUserDto);
+    public User create(User newUser) {
+        log.info("Create, input object: {}", newUser);
 
         processNameField(newUser);
         User createdUser = userStorage.create(newUser);
 
         log.info("Create, output object: {}", createdUser);
-        return UserMapper.userToDto(createdUser);
+        return createdUser;
     }
 
-    public UserDto update(UserUpdateDto userToUpdateDto) {
-        log.info("Update, input object: {}", userToUpdateDto);
+    public User update(User userToUpdate) {
+        log.info("Update, input object: {}", userToUpdate);
 
-        User userToUpdate = checkUserExists(userToUpdateDto.getId());
+        checkUserExists(userToUpdate.getId());
 
-        UserMapper.updateUserFromDto(userToUpdate, userToUpdateDto);
+        processNameField(userToUpdate);
         User updatedUser = userStorage.update(userToUpdate);
 
         log.info("Update, output object: {}", updatedUser);
-        return UserMapper.userToDto(updatedUser);
+        return updatedUser;
     }
 
     public void deleteById(int id) {
@@ -105,8 +97,8 @@ public class UserService {
         checkUserExists(friendId);
     }
 
-    public User checkUserExists(int userId) {
-        return userStorage.getById(userId)
+    public void checkUserExists(int userId) {
+        userStorage.getById(userId)
                 .orElseThrow(() -> new NotFoundException("Не найден пользователь с id:" + userId));
     }
 

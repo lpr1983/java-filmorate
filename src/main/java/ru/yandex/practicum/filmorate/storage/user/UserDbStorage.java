@@ -16,6 +16,7 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
     private static final String INSERT_QUERY = "INSERT INTO users(email, login, name, birthday) VALUES (?, ?, ?, ?)";
     private static final String FIND_BY_ID = "SELECT * FROM users WHERE id = ?";
     private static final String UPDATE_QUERY = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
+    private static final String DELETE_QUERY = "DELETE users WHERE id = ?";
 
     public UserDbStorage(JdbcTemplate jdbc, RowMapper<User> mapper) {
         super(jdbc, mapper);
@@ -54,13 +55,13 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
                 java.sql.Date.valueOf(user.getBirthday()),
                 userId);
 
-        return getById(userId).
-                orElseThrow(()-> new DbStorageException("После обновления не найден пользователь с id:" + userId));
+        return getById(userId)
+                .orElseThrow(() -> new DbStorageException("После обновления не найден пользователь с id:" + userId));
     }
 
     @Override
     public void delete(int userId) {
-        // It is not implemented
+        delete(DELETE_QUERY, userId);
     }
 
     @Override
