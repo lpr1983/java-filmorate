@@ -42,6 +42,10 @@ public class UserService {
     public User update(User userToUpdate) {
         log.info("Update, input object: {}", userToUpdate);
 
+        if (userToUpdate.getId() == null) {
+            throw new ValidationException("Не задан id пользователя.");
+        }
+
         checkUserExists(userToUpdate.getId());
 
         processNameField(userToUpdate);
@@ -97,7 +101,7 @@ public class UserService {
         checkUserExists(friendId);
     }
 
-    public void checkUserExists(int userId) {
+    public void checkUserExists(Integer userId) {
         userStorage.getById(userId)
                 .orElseThrow(() -> new NotFoundException("Не найден пользователь с id:" + userId));
     }
