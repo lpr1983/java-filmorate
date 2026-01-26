@@ -13,7 +13,6 @@ import ru.yandex.practicum.filmorate.exception.DbStorageException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Repository("userDbStorage")
@@ -25,9 +24,7 @@ public class UserDbStorage implements UserStorage {
     @Override
     public List<User> getAll() {
         String getAllQuery = "SELECT * FROM users;";
-        Map<String, Object> params = Map.of();
-
-        return jdbc.query(getAllQuery, params, mapper);
+        return jdbc.query(getAllQuery, mapper);
     }
 
     @Override
