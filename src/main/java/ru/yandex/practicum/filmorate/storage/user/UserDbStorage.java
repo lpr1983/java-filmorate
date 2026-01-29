@@ -1,25 +1,23 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.DbStorageException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.BaseDbStorage;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository("userDbStorage")
-@RequiredArgsConstructor
-public class UserDbStorage implements UserStorage {
-    private final NamedParameterJdbcTemplate jdbc;
-    private final RowMapper<User> mapper;
+public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
+
+    public UserDbStorage(NamedParameterJdbcTemplate jdbc, RowMapper<User> mapper) {
+        super(jdbc, mapper);
+    }
 
     @Override
     public List<User> getAll() {
@@ -29,24 +27,12 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public Optional<User> getById(int userId) {
-        Optional<User> result;
-
         String getByIdQuery = """
                 SELECT * FROM users
-                WHERE id = :userId
+                WHERE id = :id
                 """;
 
-        MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("userId", userId);
-
-        try {
-            User user = jdbc.queryForObject(getByIdQuery, params, mapper);
-            result = Optional.ofNullable(user);
-        } catch (EmptyResultDataAccessException ex) {
-            result = Optional.empty();
-        }
-
-        return result;
+        return getOneById(getByIdQuery, userId);
     }
 
     @Override
@@ -55,19 +41,14 @@ public class UserDbStorage implements UserStorage {
                 INSERT INTO users(email, login, name, birthday)
                 VALUES (:email, :login, :name, :birthday);
                 """;
+
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("email", user.getEmail())
                 .addValue("login", user.getLogin())
                 .addValue("name", user.getName())
-                .addValue("birthday", java.sql.Date.valueOf(user.getBirthday()));
+                .addValue("birthday", normaliseDateForSql(user.getBirthday()));
 
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbc.update(createQuery, params, keyHolder);
-
-        Integer createdUserId = keyHolder.getKeyAs(Integer.class);
-        if (createdUserId == null) {
-            throw new DbStorageException("Не удалось сохранить данные");
-        }
+        int createdUserId = insertWithKeyReturning(createQuery, params);
         user.setId(createdUserId);
 
         return user;
@@ -88,13 +69,10 @@ public class UserDbStorage implements UserStorage {
                 .addValue("email", user.getEmail())
                 .addValue("login", user.getLogin())
                 .addValue("name", user.getName())
-                .addValue("birthday", java.sql.Date.valueOf(user.getBirthday()))
+                .addValue("birthday", normaliseDateForSql(user.getBirthday()))
                 .addValue("userId", userId);
 
-        int rowsUpdated = jdbc.update(updateQuery, params);
-        if (rowsUpdated == 0) {
-            throw new DbStorageException("Не удалось обновить данные");
-        }
+        updateWithCheckResult(updateQuery, params);
 
         return getById(userId)
                 .orElseThrow(() -> new DbStorageException("После обновления не найден пользователь с id:" + userId));
@@ -159,7 +137,7 @@ public class UserDbStorage implements UserStorage {
     @Override
     public List<User> getCommonFriends(int userId, int otherId) {
         String commonFriendsQuery = """
-                SELECT * from users
+                SELECT users.* from users
                 JOIN (
                 SELECT f1.friend_id FROM friends f1
                 JOIN friends f2 ON f1.friend_id = f2.friend_id
@@ -174,4 +152,5 @@ public class UserDbStorage implements UserStorage {
 
         return jdbc.query(commonFriendsQuery, params, mapper);
     }
+
 }

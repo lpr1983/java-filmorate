@@ -9,10 +9,11 @@ import lombok.Data;
 
 import java.time.LocalDate;
 import java.util.Objects;
+import java.util.Set;
 
 @Data
 public class Film {
-    private int id;
+    private Integer id;
 
     @NotBlank(message = "Название не может быть пустым")
     private String name;
@@ -27,11 +28,15 @@ public class Film {
     @Positive(message = "Продолжительность должна быть положительным числом")
     private int duration;
 
+    private MpaRating mpa;
+
+    private Set<Genre> genres;
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Film film = (Film) o;
-        return id == film.id;
+        return Objects.equals(id, film.id);
     }
 
     @Override
