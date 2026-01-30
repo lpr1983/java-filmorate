@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-@Component
+@Component("inMemoryFilmStorage")
 public class InMemoryFilmStorage implements FilmStorage {
     private final Map<Integer, Film> films = new HashMap<>();
     private final Map<Integer, Set<Integer>> likesByUsers = new HashMap<>();

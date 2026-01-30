@@ -1,41 +1,75 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.genre.GenreDbStorage;
 
 import java.time.LocalDate;
-import java.util.Collection;
 import java.util.List;
 
 @Service
 @Slf4j
 public class FilmService {
     private final FilmStorage filmStorage;
+    private final GenreDbStorage genreDbStorage;
     private final UserService userService;
+    private final MpaService mpaService;
+    private final GenreService genreService;
     public static final LocalDate BIRTHDAY_OF_CINEMA = LocalDate.of(1895, 12, 28);
 
-    public FilmService(FilmStorage filmStorage, UserService userService) {
+    public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage,
+                       UserService userService,
+                       MpaService mpaService,
+                       GenreService genreService,
+                       GenreDbStorage genreDbStorage
+                       ) {
         this.filmStorage = filmStorage;
         this.userService = userService;
+        this.mpaService = mpaService;
+        this.genreService = genreService;
+        this.genreDbStorage = genreDbStorage;
     }
 
-    public Collection<Film> all() {
-        return filmStorage.getAll();
+    public List<Film> all() {
+
+        List<Film> result = filmStorage.getAll();
+
+        genreDbStorage.joinGenresToFilms(result);
+
+        return result;
     }
 
     public Film getById(int id) {
-        return filmStorage.getById(id)
+
+        Film result = filmStorage.getById(id)
                 .orElseThrow(() -> new NotFoundException("Не найден фильм с id: " + id));
+
+        genreDbStorage.joinGenresToFilms(List.of(result));
+
+        return result;
     }
 
     public Film create(Film newFilm) {
         log.info("create, input object {}", newFilm);
 
         validate(newFilm);
+
+        if (newFilm.getMpa() != null) {
+            mpaService.checkMpaExists(newFilm.getMpa().getId());
+        }
+
+        if (newFilm.getGenres() != null) {
+            genreService.checkGenresExists(newFilm.getGenres().stream()
+                    .map(Genre::getId)
+                    .distinct()
+                    .toList());
+        }
 
         Film createdFilm = filmStorage.create(newFilm);
 
@@ -46,12 +80,20 @@ public class FilmService {
     public Film update(Film filmToUpdate) {
         log.info("update, input object {}", filmToUpdate);
 
-        int id = filmToUpdate.getId();
-        if (filmStorage.getById(id).isEmpty()) {
-            throw new NotFoundException(String.format("Не найден элемент с id=%d", id));
+        validate(filmToUpdate);
+
+        checkFilmExists(filmToUpdate.getId());
+
+        if (filmToUpdate.getMpa() != null) {
+            mpaService.checkMpaExists(filmToUpdate.getMpa().getId());
         }
 
-        validate(filmToUpdate);
+        if (filmToUpdate.getGenres() != null) {
+            genreService.checkGenresExists(filmToUpdate.getGenres().stream()
+                    .map(Genre::getId)
+                    .distinct()
+                    .toList());
+        }
 
         Film updatedFilm = filmStorage.update(filmToUpdate);
 
@@ -89,11 +131,13 @@ public class FilmService {
 
         List<Film> popular = filmStorage.getPopular(count);
 
+        genreDbStorage.joinGenresToFilms(popular);
+
         log.debug("getPopular, count = {}, resultSize = {}", count, popular.size());
         return popular;
     }
 
-    private void checkFilmExists(int id) {
+    public void checkFilmExists(int id) {
         filmStorage.getById(id)
                 .orElseThrow(() -> new NotFoundException("Не найден фильм с id:" + id));
     }
@@ -104,4 +148,5 @@ public class FilmService {
             throw new ValidationException(String.format("Дата релиза должна быть не раньше %s", BIRTHDAY_OF_CINEMA));
         }
     }
+
 }

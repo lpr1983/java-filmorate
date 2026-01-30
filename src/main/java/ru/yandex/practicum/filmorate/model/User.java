@@ -12,7 +12,7 @@ import java.util.Objects;
 
 @Data
 public class User {
-    private int id;
+    private Integer id;
     @NotBlank(message = "Email не может быть пустым")
     @Email(message = "Email не корректный")
     private String email;
@@ -28,7 +28,7 @@ public class User {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         User user = (User) o;
-        return id == user.id;
+        return Objects.equals(id, user.id);
     }
 
     @Override

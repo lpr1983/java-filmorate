@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller.errors;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -23,6 +24,13 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleValidationException(ValidationException ex) {
         log.warn("Validation failed: {}", ex.getMessage());
+        return new ErrorResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleDataAccessException(DataAccessException ex) {
+        log.error("DB opearation error:", ex);
         return new ErrorResponse(ex.getMessage());
     }
 

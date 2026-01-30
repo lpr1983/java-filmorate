@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -15,7 +16,7 @@ import java.util.List;
 public class UserService {
     private final UserStorage userStorage;
 
-    public UserService(UserStorage userStorage) {
+    public UserService(@Qualifier("userDbStorage") UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
@@ -40,6 +41,10 @@ public class UserService {
 
     public User update(User userToUpdate) {
         log.info("Update, input object: {}", userToUpdate);
+
+        if (userToUpdate.getId() == null) {
+            throw new ValidationException("Не задан id пользователя.");
+        }
 
         checkUserExists(userToUpdate.getId());
 
@@ -96,7 +101,7 @@ public class UserService {
         checkUserExists(friendId);
     }
 
-    public void checkUserExists(int userId) {
+    public void checkUserExists(Integer userId) {
         userStorage.getById(userId)
                 .orElseThrow(() -> new NotFoundException("Не найден пользователь с id:" + userId));
     }
