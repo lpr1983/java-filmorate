@@ -11,12 +11,8 @@ import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.storage.BaseDbStorage;
 
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 @Repository("filmDbStorage")
 public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
@@ -32,31 +28,9 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             FROM films f
             LEFT JOIN mpa_ratings m ON m.id = f.mpa_rating_id
             """;
-    private final RowMapper<GenreOfFilm> genreOfFilmRowMapper;
 
-    public FilmDbStorage(NamedParameterJdbcTemplate jdbc,
-                         RowMapper<Film> mapper,
-                         RowMapper<GenreOfFilm> genreOfFilmRowMapper
-    ) {
+    public FilmDbStorage(NamedParameterJdbcTemplate jdbc, RowMapper<Film> mapper) {
         super(jdbc, mapper);
-        this.genreOfFilmRowMapper = genreOfFilmRowMapper;
-    }
-
-    private void joinGenresToFilms(List<Film> films) {
-        if (films.isEmpty()) {
-            return;
-        }
-        List<Integer> ids = films.stream()
-                .map(Film::getId)
-                .toList();
-
-        Map<Integer, Set<Genre>> genresOfFilms = getGenresOfFilms(ids);
-
-        for (Film film : films) {
-            Integer filmId = film.getId();
-            Set<Genre> genres = genresOfFilms.getOrDefault(filmId, Set.of());
-            film.setGenres(genres);
-        }
     }
 
     @Override
@@ -64,10 +38,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         String query = BASE_SELECT_FILMS_QUERY
                 + "\nORDER BY f.id";
 
-        List<Film> films = jdbc.query(query, mapper);
-        joinGenresToFilms(films);
-
-        return films;
+        return jdbc.query(query, mapper);
     }
 
     @Override
@@ -75,12 +46,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         String query = BASE_SELECT_FILMS_QUERY
                 + "\nWHERE f.id = :id";
 
-        Optional<Film> result = getOneById(query, filmId);
-        if (result.isPresent()) {
-            Film film = result.get();
-            joinGenresToFilms(List.of(film));
-        }
-        return result;
+        return getOneById(query, filmId);
     }
 
     @Override
@@ -184,38 +150,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 LIMIT :count
                 """;
         MapSqlParameterSource params = new MapSqlParameterSource().addValue("count", count);
-        List<Film> films = jdbc.query(popularQuery, params, mapper);
 
-        joinGenresToFilms(films);
-
-        return films;
-    }
-
-    private Map<Integer, Set<Genre>> getGenresOfFilms(List<Integer> ids) {
-        if (ids.isEmpty()) {
-            return Map.of();
-        }
-        String query = """
-                SELECT fg.film_id  AS film_id,
-                       fg.genre_id AS id,
-                       g.name      AS name
-                FROM film_genres fg
-                JOIN genres g ON g.id = fg.genre_id
-                WHERE fg.film_id IN (:ids)
-                """;
-        MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("ids", ids);
-
-        List<GenreOfFilm> genresOfFilms = jdbc.query(query, params, genreOfFilmRowMapper);
-
-        Map<Integer, Set<Genre>> result = new HashMap<>();
-        for (GenreOfFilm gf : genresOfFilms) {
-            Integer filmId = gf.getFilmId();
-
-            result.computeIfAbsent(filmId,k -> new HashSet<>())
-                    .add(gf.getGenre());
-        }
-        return result;
+        return jdbc.query(popularQuery, params, mapper);
     }
 
     private MapSqlParameterSource paramsForCreation(Film film) {

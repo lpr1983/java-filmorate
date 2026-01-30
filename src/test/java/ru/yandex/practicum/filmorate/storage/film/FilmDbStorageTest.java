@@ -9,12 +9,15 @@ import org.springframework.context.annotation.Import;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.genre.GenreDbStorage;
 import ru.yandex.practicum.filmorate.storage.mapper.FilmRowMapper;
 import ru.yandex.practicum.filmorate.storage.mapper.GenreOfFilmRowMapper;
+import ru.yandex.practicum.filmorate.storage.mapper.GenreRowMapper;
 import ru.yandex.practicum.filmorate.storage.mapper.UserRowMapper;
 import ru.yandex.practicum.filmorate.storage.user.UserDbStorage;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,7 +27,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Import({
         FilmDbStorage.class,
         FilmRowMapper.class,
+        GenreDbStorage.class,
         GenreOfFilmRowMapper.class,
+        GenreRowMapper.class,
         UserDbStorage.class,
         UserRowMapper.class
 })
@@ -33,6 +38,7 @@ class FilmDbStorageTest {
 
     private final FilmDbStorage filmStorage;
     private final UserDbStorage userStorage;
+    private final GenreDbStorage genreDbStorage;
 
     @Test
     void create_and_getById_with_genres() {
@@ -49,6 +55,7 @@ class FilmDbStorageTest {
         assertThat(filmStorage.getById(created.getId()))
                 .isPresent()
                 .hasValueSatisfying(found -> {
+                    genreDbStorage.joinGenresToFilms(List.of(found));
                     assertThat(found.getName()).isEqualTo("Film");
                     assertThat(found.getGenres()).extracting(Genre::getId).contains(1, 2);
                 });
@@ -69,8 +76,10 @@ class FilmDbStorageTest {
 
         assertThat(filmStorage.getById(f.getId()))
                 .isPresent()
-                .hasValueSatisfying(found ->
-                        assertThat(found.getGenres()).extracting(Genre::getId).containsExactly(2)
+                .hasValueSatisfying(found -> {
+                            genreDbStorage.joinGenresToFilms(List.of(found));
+                            assertThat(found.getGenres()).extracting(Genre::getId).containsExactly(2);
+                        }
                 );
     }
 

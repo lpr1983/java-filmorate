@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.genre.GenreDbStorage;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.List;
 @Slf4j
 public class FilmService {
     private final FilmStorage filmStorage;
+    private final GenreDbStorage genreDbStorage;
     private final UserService userService;
     private final MpaService mpaService;
     private final GenreService genreService;
@@ -24,21 +26,33 @@ public class FilmService {
     public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage,
                        UserService userService,
                        MpaService mpaService,
-                       GenreService genreService) {
+                       GenreService genreService,
+                       GenreDbStorage genreDbStorage
+                       ) {
         this.filmStorage = filmStorage;
         this.userService = userService;
         this.mpaService = mpaService;
         this.genreService = genreService;
+        this.genreDbStorage = genreDbStorage;
     }
 
     public List<Film> all() {
-        return filmStorage.getAll();
+
+        List<Film> result = filmStorage.getAll();
+
+        genreDbStorage.joinGenresToFilms(result);
+
+        return result;
     }
 
     public Film getById(int id) {
 
-        return filmStorage.getById(id)
+        Film result = filmStorage.getById(id)
                 .orElseThrow(() -> new NotFoundException("Не найден фильм с id: " + id));
+
+        genreDbStorage.joinGenresToFilms(List.of(result));
+
+        return result;
     }
 
     public Film create(Film newFilm) {
@@ -116,6 +130,8 @@ public class FilmService {
         }
 
         List<Film> popular = filmStorage.getPopular(count);
+
+        genreDbStorage.joinGenresToFilms(popular);
 
         log.debug("getPopular, count = {}, resultSize = {}", count, popular.size());
         return popular;
