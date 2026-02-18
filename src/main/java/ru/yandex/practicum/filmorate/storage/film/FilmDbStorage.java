@@ -5,6 +5,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
@@ -64,6 +65,10 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             insertFilmGenres(filmToCreate);
         }
 
+        if (filmToCreate.getDirectors() != null) {
+            insertFilmDirectors(filmToCreate);
+        }
+
         return filmToCreate;
     }
 
@@ -90,6 +95,17 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
         if (film.getGenres() != null) {
             insertFilmGenres(film);
+        }
+
+        String deleteFilmDirectorsQuery = """
+                DELETE FROM film_directors
+                WHERE film_id = :film_id
+                """;
+        jdbc.update(deleteFilmDirectorsQuery, new MapSqlParameterSource()
+                .addValue("film_id", film.getId()));
+
+        if (film.getDirectors() != null) {
+            insertFilmDirectors(film);
         }
 
         return film;
@@ -187,6 +203,20 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                     .addValue("genre_id", genre.getId());
 
             updateWithCheckResult(insertGenres, genresParams);
+        }
+    }
+
+    private void insertFilmDirectors(Film film) {
+        String insertDirectors = """
+                INSERT INTO film_directors(film_id, director_id)
+                VALUES (:film_id, :director_id)
+                """;
+        for (Director director : film.getDirectors()) {
+            MapSqlParameterSource params = new MapSqlParameterSource()
+                    .addValue("film_id", film.getId())
+                    .addValue("director_id", director.getId());
+
+            updateWithCheckResult(insertDirectors, params);
         }
     }
 }

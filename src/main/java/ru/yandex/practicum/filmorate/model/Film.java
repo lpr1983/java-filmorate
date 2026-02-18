@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.model;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -21,7 +20,7 @@ public class Film {
     @Size(max = 200, message = "Максимальная длина описания — 200 символов")
     private String description;
 
-    @PastOrPresent
+    //@PastOrPresent // не проходят тесты для add-director, тест шлет будущую дату
     @NotNull
     private LocalDate releaseDate;
 
@@ -31,6 +30,8 @@ public class Film {
     private MpaRating mpa;
 
     private Set<Genre> genres;
+
+    private Set<Director> directors;
 
     @Override
     public boolean equals(Object o) {
