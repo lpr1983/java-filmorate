@@ -58,6 +58,15 @@ Table film_directors {
   director_id int [pk, note: "ID режиссера"]
 }
 
+Table user_feeds {
+  event_id int [pk, note: "ID события"]
+  entity_id int [not null,note: "ID сущности, с которой произошло событие"]
+  event_type VARCHAR(50) [not null,note: "Тип события"]
+  operation VARCHAR(50) [not null,note: "Тип операции"]
+  user_id INT [not null, note: "ID пользователя инициировавщего событие"]
+  event_time TIMESTAMP [not null,note: "Время события"]
+}
+
 TABLE reviews {
     id INT [primary key]
     content VARCHAR [not null]
@@ -85,3 +94,5 @@ Ref: reviews.film_id < films.id
 Ref: reviews.user_id > users.id
 Ref: reviews_likes.review_id > reviews.id
 Ref: reviews_likes.user_id > users.id
+Ref: reviews_likes.user_id > users.id
+Ref: user_feeds.user_id > users.id
