@@ -6,12 +6,16 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.FilmSearchBy;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.film.query.FilmSearchQueryDbStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreDbStorage;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -21,19 +25,22 @@ public class FilmService {
     private final UserService userService;
     private final MpaService mpaService;
     private final GenreService genreService;
+    private final FilmSearchQueryDbStorage filmSearchQueryDbStorage;
     public static final LocalDate BIRTHDAY_OF_CINEMA = LocalDate.of(1895, 12, 28);
 
     public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage,
                        UserService userService,
                        MpaService mpaService,
                        GenreService genreService,
-                       GenreDbStorage genreDbStorage
+                       GenreDbStorage genreDbStorage,
+                       FilmSearchQueryDbStorage filmSearchQueryDbStorage
                        ) {
         this.filmStorage = filmStorage;
         this.userService = userService;
         this.mpaService = mpaService;
         this.genreService = genreService;
         this.genreDbStorage = genreDbStorage;
+        this.filmSearchQueryDbStorage = filmSearchQueryDbStorage;
     }
 
     public List<Film> all() {
@@ -135,6 +142,38 @@ public class FilmService {
 
         log.debug("getPopular, count = {}, resultSize = {}", count, popular.size());
         return popular;
+    }
+
+    public List<Film> search(String query, String by) {
+        log.info("search, query = {}, by = {}", query, by);
+
+        if (query.isBlank()) {
+            throw new ValidationException("Query не должен быть пустой");
+        }
+        if (by.isBlank()) {
+            throw new ValidationException("By не должен быть пустой");
+        }
+
+        Set<FilmSearchBy> searchCases = new HashSet<>();
+
+        for (String s : by.toLowerCase().split(",")) {
+            String trimmed = s.trim();
+
+            FilmSearchBy searchBy = switch (trimmed) {
+                case "title" -> FilmSearchBy.TITLE;
+                case "director" -> FilmSearchBy.DIRECTOR;
+                default -> throw new ValidationException("Неизвестный вариант by: " + trimmed);
+            };
+
+            searchCases.add(searchBy);
+        }
+
+        List<Film> foundFilms = filmSearchQueryDbStorage.search(query, searchCases);
+
+        genreDbStorage.joinGenresToFilms(foundFilms);
+        //directorDbStorage.joinDirectorsToFilms(foundFilms);
+
+        return foundFilms;
     }
 
     public void checkFilmExists(int id) {
