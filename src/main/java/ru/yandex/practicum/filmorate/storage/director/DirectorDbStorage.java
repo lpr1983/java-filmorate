@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.BaseDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.DirectorOfFilm;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -89,7 +90,7 @@ public class DirectorDbStorage extends BaseDbStorage<Director> {
 
     public List<Director> getDirectorsByIds(List<Integer> ids) {
         if (ids.isEmpty())
-            return List.of();
+            return Collections.emptyList();
 
         String query = """
                 SELECT * from directors
@@ -120,7 +121,7 @@ public class DirectorDbStorage extends BaseDbStorage<Director> {
 
     private Map<Integer, Set<Director>> getDirectorsOfFilms(List<Integer> ids) {
         if (ids.isEmpty()) {
-            return Map.of();
+            return Collections.emptyMap();
         }
         String query = """
                 SELECT fd.film_id  AS film_id,

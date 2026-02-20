@@ -18,9 +18,8 @@ public class FilmDirectorQueryDbStorage {
 
     public List<Film> getFilmsByDirector(int directorId, DirectorSortBy sortBy) {
 
-        String query = switch (sortBy) {
-            case YEAR -> """
-                    SELECT f.id,
+        String baseQuery = """
+                           SELECT f.id,
                            f.name,
                            f.description,
                            f.release_date,
@@ -29,23 +28,17 @@ public class FilmDirectorQueryDbStorage {
                            m.name          AS mpa_name,
                            m.age           AS mpa_age
                     FROM films f
-                    JOIN film_directors fd ON f.id = fd.film_id
                     LEFT JOIN mpa_ratings m ON m.id = f.mpa_rating_id
+                """;
+
+        String query = switch (sortBy) {
+            case YEAR -> baseQuery + """
+                    JOIN film_directors fd ON f.id = fd.film_id
                     WHERE fd.director_id = :director_id
                     ORDER BY f.release_date, f.id
                     """;
-            case LIKES -> """
-                      SELECT f.id,
-                           f.name,
-                           f.description,
-                           f.release_date,
-                           f.duration,
-                           f.mpa_rating_id AS mpa_rating_id,
-                           m.name          AS mpa_name,
-                           m.age           AS mpa_age
-                    FROM films f
+            case LIKES -> baseQuery + """
                     JOIN film_directors fd ON f.id = fd.film_id
-                    LEFT JOIN mpa_ratings m ON m.id = f.mpa_rating_id
                     LEFT JOIN (
                         SELECT l.film_id,
                                COUNT(l.user_id) AS likes_amount
