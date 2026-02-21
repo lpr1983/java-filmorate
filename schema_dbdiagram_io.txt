@@ -1,0 +1,87 @@
+// Users
+Table users {
+  id int [pk, increment, note: "Уникальный идентификатор пользователя"]
+  email varchar(255) [not null, unique, note: "Email пользователя, уникальный"]
+  login varchar(50) [not null, unique, note: "Логин пользователя, уникальный"]
+  name varchar(100) [note: "Имя пользователя"]
+  birthday date [not null, note: "Дата рождения пользователя"]
+}
+
+// Genres
+Table genres {
+  id int [pk, increment, note: "Уникальный идентификатор жанра"]
+  name varchar(50) [not null, note: "Название жанра"]
+}
+
+// MPA Ratings
+Table mpa_ratings {
+  id int [pk, increment, note: "Уникальный идентификатор рейтинга MPA"]
+  name varchar(40) [not null, note: "Код рейтинга (G, PG, PG-13, R, NC-17)"]
+  age int [not null, note: "Возраст от"]
+}
+
+// Films
+Table films {
+  id int [pk, increment, note: "Уникальный идентификатор фильма"]
+  name varchar(255) [not null, note: "Название фильма"]
+  description text [note: "Описание фильма"]
+  release_date date [not null, note: "Дата выхода фильма"]
+  duration int [not null, note: "Продолжительность фильма в минутах"]
+  mpa_rating_id int [note: "Ссылка на возрастной рейтинг MPA"]
+}
+
+// Film Genres (M:N)
+Table film_genres {
+  film_id int [pk, note: "ID фильма"]
+  genre_id int [pk, note: "ID жанра"]
+}
+
+// Friendship (directed)
+Table friends {
+  user_id int [pk, note: "ID пользователя, отправившего запрос"]
+  friend_id int [pk, note: "ID пользователя, получившего запрос"]
+}
+
+// Likes (M:N)
+Table likes {
+  film_id int [pk, note: "ID фильма"]
+  user_id int [pk, note: "ID пользователя, поставившего лайк"]
+}
+
+Table directors {
+  id int [pk, increment, note: "Id режиссера"]
+  name varchar(100) [not null]
+}
+
+Table film_directors {
+  film_id int [pk, note: "ID фильма"]
+  director_id int [pk, note: "ID режиссера"]
+}
+
+TABLE reviews {
+    id INT [primary key]
+    content VARCHAR [not null]
+    positive BOOLEAN [not null]
+    film_id int
+    user_id int
+}
+
+TABLE reviews_likes {
+    review_id int [primary key]
+    user_id int [primary key]
+    rating int
+}
+
+// Relationships (только направление)
+Ref: films.mpa_rating_id > mpa_ratings.id
+Ref: film_genres.film_id > films.id
+Ref: film_genres.genre_id > genres.id
+Ref: friends.user_id > users.id
+Ref: friends.friend_id > users.id
+Ref: likes.film_id > films.id
+Ref: likes.user_id > users.id
+Ref: film_directors.director_id > directors.id
+Ref: reviews.film_id < films.id
+Ref: reviews.user_id > users.id
+Ref: reviews_likes.review_id > reviews.id
+Ref: reviews_likes.user_id > users.id

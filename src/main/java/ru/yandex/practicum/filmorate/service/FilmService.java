@@ -5,9 +5,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.storage.director.DirectorDbStorage;
+import ru.yandex.practicum.filmorate.model.DirectorSortBy;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.film.query.FilmDirectorQueryDbStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreDbStorage;
 
 import java.time.LocalDate;
@@ -21,19 +25,28 @@ public class FilmService {
     private final UserService userService;
     private final MpaService mpaService;
     private final GenreService genreService;
+    private final DirectorService directorService;
+    private final DirectorDbStorage directorDbStorage;
+    private final FilmDirectorQueryDbStorage filmDirectorQueryDbStorage;
     public static final LocalDate BIRTHDAY_OF_CINEMA = LocalDate.of(1895, 12, 28);
 
     public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage,
                        UserService userService,
                        MpaService mpaService,
                        GenreService genreService,
-                       GenreDbStorage genreDbStorage
-                       ) {
+                       GenreDbStorage genreDbStorage,
+                       DirectorService directorService,
+                       DirectorDbStorage directorDbStorage,
+                       FilmDirectorQueryDbStorage filmDirectorQueryDbStorage
+    ) {
         this.filmStorage = filmStorage;
         this.userService = userService;
         this.mpaService = mpaService;
         this.genreService = genreService;
         this.genreDbStorage = genreDbStorage;
+        this.directorService = directorService;
+        this.directorDbStorage = directorDbStorage;
+        this.filmDirectorQueryDbStorage = filmDirectorQueryDbStorage;
     }
 
     public List<Film> all() {
@@ -41,6 +54,7 @@ public class FilmService {
         List<Film> result = filmStorage.getAll();
 
         genreDbStorage.joinGenresToFilms(result);
+        directorDbStorage.joinDirectorsToFilms(result);
 
         return result;
     }
@@ -51,6 +65,7 @@ public class FilmService {
                 .orElseThrow(() -> new NotFoundException("Не найден фильм с id: " + id));
 
         genreDbStorage.joinGenresToFilms(List.of(result));
+        directorDbStorage.joinDirectorsToFilms(List.of(result));
 
         return result;
     }
@@ -67,6 +82,13 @@ public class FilmService {
         if (newFilm.getGenres() != null) {
             genreService.checkGenresExists(newFilm.getGenres().stream()
                     .map(Genre::getId)
+                    .distinct()
+                    .toList());
+        }
+
+        if (newFilm.getDirectors() != null) {
+            directorService.checkDirectorsExists(newFilm.getDirectors().stream()
+                    .map(Director::getId)
                     .distinct()
                     .toList());
         }
@@ -91,6 +113,13 @@ public class FilmService {
         if (filmToUpdate.getGenres() != null) {
             genreService.checkGenresExists(filmToUpdate.getGenres().stream()
                     .map(Genre::getId)
+                    .distinct()
+                    .toList());
+        }
+
+        if (filmToUpdate.getDirectors() != null) {
+            directorService.checkDirectorsExists(filmToUpdate.getDirectors().stream()
+                    .map(Director::getId)
                     .distinct()
                     .toList());
         }
@@ -132,9 +161,23 @@ public class FilmService {
         List<Film> popular = filmStorage.getPopular(count);
 
         genreDbStorage.joinGenresToFilms(popular);
+        directorDbStorage.joinDirectorsToFilms(popular);
 
         log.debug("getPopular, count = {}, resultSize = {}", count, popular.size());
         return popular;
+    }
+
+    public List<Film> getFilmsByDirector(int directorId, DirectorSortBy sortBy) {
+        directorService.checkDirectorExists(directorId);
+
+        log.debug("getFilmsOfDirector, directorId = {}, sortBy = {}", directorId, sortBy);
+
+        List<Film> filmsOfDirector = filmDirectorQueryDbStorage.getFilmsByDirector(directorId, sortBy);
+
+        genreDbStorage.joinGenresToFilms(filmsOfDirector);
+        directorDbStorage.joinDirectorsToFilms(filmsOfDirector);
+
+        return filmsOfDirector;
     }
 
     public void checkFilmExists(int id) {
