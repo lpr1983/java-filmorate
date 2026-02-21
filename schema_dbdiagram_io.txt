@@ -58,6 +58,20 @@ Table film_directors {
   director_id int [pk, note: "ID режиссера"]
 }
 
+TABLE reviews {
+    id INT [primary key]
+    content VARCHAR [not null]
+    positive BOOLEAN [not null]
+    film_id int
+    user_id int
+}
+
+TABLE reviews_likes {
+    review_id int [primary key]
+    user_id int [primary key]
+    rating int
+}
+
 // Relationships (только направление)
 Ref: films.mpa_rating_id > mpa_ratings.id
 Ref: film_genres.film_id > films.id
@@ -67,3 +81,7 @@ Ref: friends.friend_id > users.id
 Ref: likes.film_id > films.id
 Ref: likes.user_id > users.id
 Ref: film_directors.director_id > directors.id
+Ref: reviews.film_id < films.id
+Ref: reviews.user_id > users.id
+Ref: reviews_likes.review_id > reviews.id
+Ref: reviews_likes.user_id > users.id
