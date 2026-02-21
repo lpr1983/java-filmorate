@@ -167,6 +167,24 @@ public class FilmService {
         return popular;
     }
 
+    public List<Film> getPopular(int count, Integer genreId, Integer year) {
+        if (count <= 0) {
+            throw new ValidationException("Параметр count должен быть больше 0");
+        }
+
+        // Получаем список популярных фильмов с фильтрацией по жанру и году
+        List<Film> popular = filmStorage.getPopular(count, genreId, year);
+
+        // Для DB-хранилища подгружаем жанры и директоров
+        genreDbStorage.joinGenresToFilms(popular);
+        directorDbStorage.joinDirectorsToFilms(popular);
+
+        log.debug("getPopular, count = {}, genreId = {}, year = {}, resultSize = {}",
+                count, genreId, year, popular.size());
+
+        return popular;
+    }
+
     public List<Film> getFilmsByDirector(int directorId, DirectorSortBy sortBy) {
         directorService.checkDirectorExists(directorId);
 

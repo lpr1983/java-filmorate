@@ -3,13 +3,7 @@ package ru.yandex.practicum.filmorate.storage.film;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Component("inMemoryFilmStorage")
 public class InMemoryFilmStorage implements FilmStorage {
@@ -68,6 +62,23 @@ public class InMemoryFilmStorage implements FilmStorage {
                 .limit(count)
                 .map(films::get)
                 .filter(Objects::nonNull)
+                .toList();
+    }
+
+    @Override
+    public List<Film> getPopular(int count, Integer genreId, Integer year) {
+        return films.values().stream()
+                // фильтр по жанру
+                .filter(f -> genreId == null || f.getGenres().stream().anyMatch(g -> g.getId() == genreId))
+                // фильтр по году
+                .filter(f -> year == null || f.getReleaseDate().getYear() == year)
+                // сортировка по количеству лайков (убывание)
+                .sorted((f1, f2) -> Integer.compare(
+                        likesByUsers.getOrDefault(f2.getId(), Collections.emptySet()).size(),
+                        likesByUsers.getOrDefault(f1.getId(), Collections.emptySet()).size()
+                ))
+                // лимит count
+                .limit(count)
                 .toList();
     }
 
