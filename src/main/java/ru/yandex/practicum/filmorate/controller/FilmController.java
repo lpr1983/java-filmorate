@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.DirectorSortBy;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -75,4 +77,15 @@ public class FilmController {
     public List<Film> search(@RequestParam String query, @RequestParam String by) {
         return filmService.search(query, by);
     }
+    @GetMapping("/director/{directorId}")
+    public List<Film> getFilmsOfDirector(
+            @PathVariable int directorId,
+            @RequestParam(defaultValue = "year") String sortBy) {
+
+        DirectorSortBy directorSortBy = DirectorSortBy.from(sortBy)
+                .orElseThrow(() -> new ValidationException("Unknown sortBy: " + sortBy));
+
+        return filmService.getFilmsByDirector(directorId, directorSortBy);
+    }
+
 }
