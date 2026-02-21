@@ -42,11 +42,9 @@ public class FilmService {
                        GenreDbStorage genreDbStorage,
                        DirectorService directorService,
                        DirectorDbStorage directorDbStorage,
-                       FilmDirectorQueryDbStorage filmDirectorQueryDbStorage
-    ) {
-                       GenreDbStorage genreDbStorage,
+                       FilmDirectorQueryDbStorage filmDirectorQueryDbStorage,
                        FilmSearchQueryDbStorage filmSearchQueryDbStorage
-                       ) {
+    ) {
         this.filmStorage = filmStorage;
         this.userService = userService;
         this.mpaService = mpaService;
@@ -216,7 +214,7 @@ public class FilmService {
         List<Film> foundFilms = filmSearchQueryDbStorage.search(query, searchCases);
 
         genreDbStorage.joinGenresToFilms(foundFilms);
-        //directorDbStorage.joinDirectorsToFilms(foundFilms);
+        directorDbStorage.joinDirectorsToFilms(foundFilms);
 
         return foundFilms;
     }
