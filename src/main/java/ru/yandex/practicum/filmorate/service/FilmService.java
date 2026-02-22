@@ -153,20 +153,6 @@ public class FilmService {
         log.info("Like deleted: Id={}, userId={}", id, userId);
     }
 
-    public List<Film> getPopular(int count) {
-        if (count <= 0) {
-            throw new ValidationException("Параметр count должен быть больше 0");
-        }
-
-        List<Film> popular = filmStorage.getPopular(count);
-
-        genreDbStorage.joinGenresToFilms(popular);
-        directorDbStorage.joinDirectorsToFilms(popular);
-
-        log.debug("getPopular, count = {}, resultSize = {}", count, popular.size());
-        return popular;
-    }
-
     public List<Film> getPopular(int count, Integer genreId, Integer year) {
         if (count <= 0) {
             throw new ValidationException("Параметр count должен быть больше 0");

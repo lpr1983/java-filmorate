@@ -151,26 +151,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         jdbc.update(deleteLikeQuery, params);
     }
 
-    //Старый метод топ-N без фильтров
-    @Override
-    public List<Film> getPopular(int count) {
-        String popularQuery = BASE_SELECT_FILMS_QUERY + """
-                LEFT JOIN
-                    (SELECT l.film_id AS film_id,
-                            COUNT(l.user_id) AS amountOfLikes
-                     FROM likes l
-                     GROUP BY l.film_id) q
-                ON q.film_id = f.id
-                ORDER BY COALESCE(q.amountOfLikes, 0) DESC, f.id
-                LIMIT :count
-                """;
-
-        MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("count", count);
-
-        return jdbc.query(popularQuery, params, mapper);
-    }
-
     // Новый метод топ-N с фильтрацией по жанру и году
     @Override
     public List<Film> getPopular(int count, Integer genreId, Integer year) {
