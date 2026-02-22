@@ -175,14 +175,21 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     @Override
     public List<Film> getPopular(int count, Integer genreId, Integer year) {
         String sql = BASE_SELECT_FILMS_QUERY + """
-                LEFT JOIN likes l ON l.film_id = f.id
-                LEFT JOIN film_genres fg ON fg.film_id = f.id
-                WHERE (:genreId IS NULL OR fg.genre_id = :genreId)
-                  AND (:year IS NULL OR EXTRACT(YEAR FROM f.release_date) = :year)
-                GROUP BY f.id, m.id
-                ORDER BY COUNT(l.user_id) DESC, f.id
-                LIMIT :count
-                """;
+            LEFT JOIN (
+                SELECT film_id, COUNT(*) AS likes_count
+                FROM likes
+                GROUP BY film_id
+            ) l ON l.film_id = f.id
+            WHERE (:genreId IS NULL OR EXISTS (
+                    SELECT 1
+                    FROM film_genres fg
+                    WHERE fg.film_id = f.id
+                      AND fg.genre_id = :genreId
+            ))
+              AND (:year IS NULL OR EXTRACT(YEAR FROM f.release_date) = :year)
+            ORDER BY COALESCE(l.likes_count, 0) DESC, f.id
+            LIMIT :count
+            """;
 
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("count", count)
