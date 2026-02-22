@@ -77,6 +77,7 @@ public class UserController {
 
     @GetMapping("/{id}/feed")
     public Collection<Feed> getFeeds(@PathVariable int id) {
+        userService.checkUserExists(id);
         return userFeedService.findAllByUserId(id);
     }
 
