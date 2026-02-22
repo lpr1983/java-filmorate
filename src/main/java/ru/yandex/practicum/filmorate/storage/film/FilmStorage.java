@@ -21,6 +21,8 @@ public interface FilmStorage {
 
     void deleteLike(int filmId, int userId);
 
-    // Метод для топ-N фильмов с фильтрацией
+    List<Film> getPopular(int count);
+
+    // Новый метод для топ-N фильмов с фильтрацией
     List<Film> getPopular(int count, Integer genreId, Integer year);
 }

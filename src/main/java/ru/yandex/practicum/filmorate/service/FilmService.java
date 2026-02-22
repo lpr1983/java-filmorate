@@ -153,6 +153,10 @@ public class FilmService {
         log.info("Like deleted: Id={}, userId={}", id, userId);
     }
 
+    public List<Film> getPopular(int count) {
+        return getPopular(count, null, null);
+    }
+
     public List<Film> getPopular(int count, Integer genreId, Integer year) {
         if (count <= 0) {
             throw new ValidationException("Параметр count должен быть больше 0");
