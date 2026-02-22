@@ -77,6 +77,11 @@ public class FilmController {
         return filmService.getPopular(count, genreId, year);
     }
 
+    @GetMapping("/search")
+    public List<Film> search(@RequestParam String query, @RequestParam String by) {
+        return filmService.search(query, by);
+    }
+
     @GetMapping("/director/{directorId}")
     public List<Film> getFilmsOfDirector(
             @PathVariable int directorId,

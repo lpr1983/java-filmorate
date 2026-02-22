@@ -7,15 +7,19 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.FilmSearchBy;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.director.DirectorDbStorage;
 import ru.yandex.practicum.filmorate.model.DirectorSortBy;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.film.query.FilmSearchQueryDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.query.FilmDirectorQueryDbStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreDbStorage;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -25,6 +29,7 @@ public class FilmService {
     private final UserService userService;
     private final MpaService mpaService;
     private final GenreService genreService;
+    private final FilmSearchQueryDbStorage filmSearchQueryDbStorage;
     private final DirectorService directorService;
     private final DirectorDbStorage directorDbStorage;
     private final FilmDirectorQueryDbStorage filmDirectorQueryDbStorage;
@@ -37,7 +42,8 @@ public class FilmService {
                        GenreDbStorage genreDbStorage,
                        DirectorService directorService,
                        DirectorDbStorage directorDbStorage,
-                       FilmDirectorQueryDbStorage filmDirectorQueryDbStorage
+                       FilmDirectorQueryDbStorage filmDirectorQueryDbStorage,
+                       FilmSearchQueryDbStorage filmSearchQueryDbStorage
     ) {
         this.filmStorage = filmStorage;
         this.userService = userService;
@@ -47,6 +53,7 @@ public class FilmService {
         this.directorService = directorService;
         this.directorDbStorage = directorDbStorage;
         this.filmDirectorQueryDbStorage = filmDirectorQueryDbStorage;
+        this.filmSearchQueryDbStorage = filmSearchQueryDbStorage;
     }
 
     public List<Film> all() {
@@ -186,6 +193,38 @@ public class FilmService {
         directorDbStorage.joinDirectorsToFilms(filmsOfDirector);
 
         return filmsOfDirector;
+    }
+
+    public List<Film> search(String query, String by) {
+        log.info("search, query = {}, by = {}", query, by);
+
+        if (query.isBlank()) {
+            throw new ValidationException("Query не должен быть пустой");
+        }
+        if (by.isBlank()) {
+            throw new ValidationException("By не должен быть пустой");
+        }
+
+        Set<FilmSearchBy> searchCases = new HashSet<>();
+
+        for (String s : by.toLowerCase().split(",")) {
+            String trimmed = s.trim();
+
+            FilmSearchBy searchBy = switch (trimmed) {
+                case "title" -> FilmSearchBy.TITLE;
+                case "director" -> FilmSearchBy.DIRECTOR;
+                default -> throw new ValidationException("Неизвестный вариант by: " + trimmed);
+            };
+
+            searchCases.add(searchBy);
+        }
+
+        List<Film> foundFilms = filmSearchQueryDbStorage.search(query, searchCases);
+
+        genreDbStorage.joinGenresToFilms(foundFilms);
+        directorDbStorage.joinDirectorsToFilms(foundFilms);
+
+        return foundFilms;
     }
 
     public void checkFilmExists(int id) {
