@@ -230,7 +230,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     public List<Film> getCommonFilms(int userId, int friendId) {
 
         // Получаем фильмы, лайкнутые обоими пользователями,
-        // сортируем по популярности (числу лайков)
+        // сортируем по популярности
         String sql = BASE_SELECT_FILMS_QUERY + """
         JOIN likes l1 ON l1.film_id = f.id
         JOIN likes l2 ON l2.film_id = f.id
