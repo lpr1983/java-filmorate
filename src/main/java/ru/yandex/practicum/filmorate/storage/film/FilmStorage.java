@@ -25,4 +25,6 @@ public interface FilmStorage {
 
     // Новый метод для топ-N фильмов с фильтрацией
     List<Film> getPopular(int count, Integer genreId, Integer year);
+
+    List<Film> getCommonFilms(int userId, int friendId);
 }

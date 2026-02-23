@@ -239,4 +239,11 @@ public class FilmService {
         }
     }
 
+    // Получение фильмов, которые лайкнули оба пользователя
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        userService.getById(userId);
+        userService.getById(friendId);
+        return filmStorage.getCommonFilms(userId, friendId);
+    }
+
 }
