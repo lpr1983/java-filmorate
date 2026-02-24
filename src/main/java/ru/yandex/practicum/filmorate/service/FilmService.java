@@ -239,4 +239,20 @@ public class FilmService {
         }
     }
 
+    // Получение фильмов, которые лайкнули оба пользователя
+    public List<Film> getCommonFilms(int userId, int friendId) {
+
+        userService.checkUserExists(userId);
+        userService.checkUserExists(friendId);
+
+        List<Film> foundFilms = filmStorage.getCommonFilms(userId, friendId);
+
+        // Обогащаем жанрами
+        genreDbStorage.joinGenresToFilms(foundFilms);
+        // Обогащаем режиссёрами
+        directorDbStorage.joinDirectorsToFilms(foundFilms);
+
+        return foundFilms;
+    }
+
 }

@@ -77,7 +77,6 @@ public class InMemoryFilmStorage implements FilmStorage {
                         likesByUsers.getOrDefault(f2.getId(), Collections.emptySet()).size(),
                         likesByUsers.getOrDefault(f1.getId(), Collections.emptySet()).size()
                 ))
-                // лимит count
                 .limit(count)
                 .toList();
     }
@@ -87,4 +86,24 @@ public class InMemoryFilmStorage implements FilmStorage {
         return nextId;
     }
 
+    @Override
+    public List<Film> getCommonFilms(int userId, int friendId) {
+
+        // Проходим по всем фильмам
+        return films.values().stream()
+                // оставляем только те фильмы, которые лайкнули ОБА пользователя
+                .filter(film -> {
+                    Set<Integer> likes = likesByUsers.getOrDefault(
+                            film.getId(),
+                            Collections.emptySet()
+                    );
+                    return likes.contains(userId) && likes.contains(friendId);
+                })
+                // сортируем по популярности (количеству лайков) по убыванию
+                .sorted((f1, f2) -> Integer.compare(
+                        likesByUsers.getOrDefault(f2.getId(), Collections.emptySet()).size(),
+                        likesByUsers.getOrDefault(f1.getId(), Collections.emptySet()).size()
+                ))
+                .toList();
+    }
 }

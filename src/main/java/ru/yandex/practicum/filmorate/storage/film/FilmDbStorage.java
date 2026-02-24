@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+
 @Repository("filmDbStorage")
 public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private static final String BASE_SELECT_FILMS_QUERY = """
@@ -160,14 +161,14 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     @Override
     public List<Film> getPopular(int count, Integer genreId, Integer year) {
         String sql = BASE_SELECT_FILMS_QUERY + """
-             LEFT JOIN likes l ON l.film_id = f.id
-            LEFT JOIN film_genres fg ON fg.film_id = f.id
-            WHERE (:genreId IS NULL OR fg.genre_id = :genreId)
-              AND (:year IS NULL OR EXTRACT(YEAR FROM f.release_date) = :year)
-            GROUP BY f.id, m.id
-            ORDER BY COUNT(DISTINCT l.user_id) DESC, f.id
-            LIMIT :count
-            """;
+                 LEFT JOIN likes l ON l.film_id = f.id
+                LEFT JOIN film_genres fg ON fg.film_id = f.id
+                WHERE (:genreId IS NULL OR fg.genre_id = :genreId)
+                  AND (:year IS NULL OR EXTRACT(YEAR FROM f.release_date) = :year)
+                GROUP BY f.id, m.id
+                ORDER BY COUNT(DISTINCT l.user_id) DESC, f.id
+                LIMIT :count
+                """;
 
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("count", count)
@@ -225,5 +226,27 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
             updateWithCheckResult(insertDirectors, params);
         }
+    }
+
+    @Override
+    public List<Film> getCommonFilms(int userId, int friendId) {
+
+        // Получаем фильмы, лайкнутые обоими пользователями,
+        // сортируем по популярности
+        String sql = BASE_SELECT_FILMS_QUERY + """
+                JOIN likes l1 ON l1.film_id = f.id
+                JOIN likes l2 ON l2.film_id = f.id
+                LEFT JOIN likes l ON l.film_id = f.id
+                WHERE l1.user_id = :userId
+                  AND l2.user_id = :friendId
+                GROUP BY f.id, m.id
+                ORDER BY COUNT(DISTINCT l.user_id) DESC
+                """;
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("userId", userId)
+                .addValue("friendId", friendId);
+
+        return jdbc.query(sql, params, mapper);
     }
 }
