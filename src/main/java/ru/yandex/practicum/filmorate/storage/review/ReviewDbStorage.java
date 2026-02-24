@@ -60,7 +60,7 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
 
     private static final String UPDATE_REVIEW_QUERY = """
             UPDATE reviews SET
-            content = :content, positive = :positive, film_id = :film_id, user_id = :user_id
+            content = :content, positive = :positive
             WHERE id = :id
             """;
 
@@ -108,8 +108,8 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("content", review.getContent())
                 .addValue("positive", review.getIsPositive())
-                .addValue("film_id", review.getFilmId())
-                .addValue("user_id", review.getUserId())
+//                .addValue("film_id", review.getFilmId()) тесты "не хотят" обновление этих полей
+//                .addValue("user_id", review.getUserId())
                 .addValue("id", review.getReviewId());
 
         updateWithCheckResult(UPDATE_REVIEW_QUERY, params);

@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.DbStorageException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
@@ -42,7 +43,10 @@ public class ReviewService {
         userService.checkUserExists(review.getUserId());
         filmService.checkFilmExists(review.getFilmId());
 
-        Review createdReview = reviewStorage.create(review);
+        int createdReviewId = reviewStorage.create(review).getReviewId();
+
+        Review createdReview = reviewStorage.getById(createdReviewId)
+                .orElseThrow(() -> new DbStorageException("Созденный отзыв не найден в БД, id: " + createdReviewId));
 
         log.info("create review, output object {}", createdReview);
 
@@ -55,7 +59,11 @@ public class ReviewService {
         userService.checkUserExists(review.getUserId());
         filmService.checkFilmExists(review.getFilmId());
 
-        Review updatedReview = reviewStorage.update(review);
+        reviewStorage.update(review);
+
+        int reviewId = review.getReviewId();
+        Review updatedReview = reviewStorage.getById(reviewId)
+                .orElseThrow(() -> new DbStorageException("Обновленный отзыв не найден в БД, id: " + reviewId));
 
         log.info("update review, output object {}", updatedReview);
 
