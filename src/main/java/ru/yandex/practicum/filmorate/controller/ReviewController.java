@@ -12,8 +12,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.OperationType;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.service.ReviewService;
+import ru.yandex.practicum.filmorate.service.UserFeedService;
 
 import java.util.List;
 
@@ -21,26 +24,34 @@ import java.util.List;
 @RequestMapping("/reviews")
 public class ReviewController {
     private final ReviewService reviewService;
+    private final UserFeedService userFeedService;
 
-    public ReviewController(ReviewService reviewService) {
+    public ReviewController(ReviewService reviewService, UserFeedService userFeedService) {
         this.reviewService = reviewService;
+        this.userFeedService = userFeedService;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Review createReview(@Valid @RequestBody Review review) {
-        return reviewService.create(review);
+        Review result = reviewService.create(review);
+        userFeedService.saveFeed(result.getUserId(), result.getReviewId(), EventType.REVIEW, OperationType.ADD);
+        return result;
     }
 
     @PutMapping
     public Review updateReview(@Valid @RequestBody Review review) {
-        return reviewService.update(review);
+        Review result = reviewService.update(review);
+        userFeedService.saveFeed(result.getUserId(), result.getReviewId(), EventType.REVIEW, OperationType.UPDATE);
+        return result;
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable int id) {
+        Review review = reviewService.getReviewById(id);
         reviewService.deleteById(id);
+        userFeedService.saveFeed(review.getUserId(), review.getReviewId(), EventType.REVIEW, OperationType.REMOVE);
     }
 
     @GetMapping("/{id}")
