@@ -12,7 +12,9 @@ import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.storage.BaseDbStorage;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+
 
 @Repository("filmDbStorage")
 public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
@@ -159,14 +161,14 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     @Override
     public List<Film> getPopular(int count, Integer genreId, Integer year) {
         String sql = BASE_SELECT_FILMS_QUERY + """
-             LEFT JOIN likes l ON l.film_id = f.id
-            LEFT JOIN film_genres fg ON fg.film_id = f.id
-            WHERE (:genreId IS NULL OR fg.genre_id = :genreId)
-              AND (:year IS NULL OR EXTRACT(YEAR FROM f.release_date) = :year)
-            GROUP BY f.id, m.id
-            ORDER BY COUNT(DISTINCT l.user_id) DESC, f.id
-            LIMIT :count
-            """;
+                 LEFT JOIN likes l ON l.film_id = f.id
+                LEFT JOIN film_genres fg ON fg.film_id = f.id
+                WHERE (:genreId IS NULL OR fg.genre_id = :genreId)
+                  AND (:year IS NULL OR EXTRACT(YEAR FROM f.release_date) = :year)
+                GROUP BY f.id, m.id
+                ORDER BY COUNT(DISTINCT l.user_id) DESC, f.id
+                LIMIT :count
+                """;
 
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("count", count)
@@ -232,48 +234,19 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         // Получаем фильмы, лайкнутые обоими пользователями,
         // сортируем по популярности
         String sql = BASE_SELECT_FILMS_QUERY + """
-        JOIN likes l1 ON l1.film_id = f.id
-        JOIN likes l2 ON l2.film_id = f.id
-        LEFT JOIN likes l ON l.film_id = f.id
-        WHERE l1.user_id = :userId
-          AND l2.user_id = :friendId
-        GROUP BY f.id, m.id
-        ORDER BY COUNT(DISTINCT l.user_id) DESC
-        """;
+                JOIN likes l1 ON l1.film_id = f.id
+                JOIN likes l2 ON l2.film_id = f.id
+                LEFT JOIN likes l ON l.film_id = f.id
+                WHERE l1.user_id = :userId
+                  AND l2.user_id = :friendId
+                GROUP BY f.id, m.id
+                ORDER BY COUNT(DISTINCT l.user_id) DESC
+                """;
 
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("userId", userId)
                 .addValue("friendId", friendId);
 
-        // Получаем базовые фильмы
-        List<Film> films = jdbc.query(sql, params, mapper);
-
-        // Дозагружаем жанры
-        if (!films.isEmpty()) {
-            String genresSql = """
-            SELECT fg.film_id, g.id, g.name
-            FROM film_genres fg
-            JOIN genres g ON g.id = fg.genre_id
-            WHERE fg.film_id IN (:filmIds)
-            """;
-
-            MapSqlParameterSource genreParams = new MapSqlParameterSource()
-                    .addValue("filmIds", films.stream().map(Film::getId).toList());
-
-            // Временная карта для сопоставления
-            Map<Integer, List<Genre>> genresMap = new HashMap<>();
-            jdbc.query(genresSql, genreParams, rs -> {
-                int filmId = rs.getInt("film_id");
-                Genre genre = new Genre(rs.getInt("id"), rs.getString("name"));
-                genresMap.computeIfAbsent(filmId, k -> new ArrayList<>()).add(genre);
-            });
-
-            // Привязываем жанры к фильмам (Set, как требует модель)
-            for (Film film : films) {
-                film.setGenres(new HashSet<>(genresMap.getOrDefault(film.getId(), new ArrayList<>())));
-            }
-        }
-
-        return films;
+        return jdbc.query(sql, params, mapper);
     }
 }
