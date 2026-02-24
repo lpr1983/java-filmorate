@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.DbStorageException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
@@ -100,7 +101,10 @@ public class FilmService {
                     .toList());
         }
 
-        Film createdFilm = filmStorage.create(newFilm);
+        int createdFilmId = filmStorage.create(newFilm).getId();
+
+        Film createdFilm = filmStorage.getById(createdFilmId)
+                .orElseThrow(() -> new DbStorageException("Созданный фильм не найден в БД"));
 
         List<Film> filmToUpdateGenresAndDirectors = List.of(createdFilm);
         genreDbStorage.joinGenresToFilms(filmToUpdateGenresAndDirectors);
@@ -135,7 +139,10 @@ public class FilmService {
                     .toList());
         }
 
-        Film updatedFilm = filmStorage.update(filmToUpdate);
+        filmStorage.update(filmToUpdate);
+
+        Film updatedFilm = filmStorage.getById(filmToUpdate.getId())
+                .orElseThrow(() -> new DbStorageException("Обновленный фильм не найден в БД"));
 
         List<Film> filmToUpdateGenresAndDirectors = List.of(updatedFilm);
         genreDbStorage.joinGenresToFilms(filmToUpdateGenresAndDirectors);
