@@ -102,6 +102,10 @@ public class FilmService {
 
         Film createdFilm = filmStorage.create(newFilm);
 
+        List<Film> filmToUpdateGenresAndDirectors = List.of(createdFilm);
+        genreDbStorage.joinGenresToFilms(filmToUpdateGenresAndDirectors);
+        directorDbStorage.joinDirectorsToFilms(filmToUpdateGenresAndDirectors);
+
         log.info("create, output object {}", createdFilm);
         return createdFilm;
     }
@@ -132,6 +136,10 @@ public class FilmService {
         }
 
         Film updatedFilm = filmStorage.update(filmToUpdate);
+
+        List<Film> filmToUpdateGenresAndDirectors = List.of(updatedFilm);
+        genreDbStorage.joinGenresToFilms(filmToUpdateGenresAndDirectors);
+        directorDbStorage.joinDirectorsToFilms(filmToUpdateGenresAndDirectors);
 
         log.info("output object: {}", updatedFilm);
         return updatedFilm;
