@@ -263,6 +263,10 @@ public class FilmService {
     // Получение фильмов, которые лайкнули оба пользователя
     public List<Film> getCommonFilms(int userId, int friendId) {
 
+        if (userId == friendId) {
+            throw new ValidationException("Совпадают идентификаторы пользователей");
+        }
+
         userService.checkUserExists(userId);
         userService.checkUserExists(friendId);
 
