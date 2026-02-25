@@ -13,7 +13,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.director.DirectorDbStorage;
 import ru.yandex.practicum.filmorate.model.DirectorSortBy;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.film.query.FilmDirectorQueryDbStorage;
+import ru.yandex.practicum.filmorate.storage.film.query.FilmDirectorQueryStorage;
 import ru.yandex.practicum.filmorate.storage.film.query.FilmSearchQueryStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreDbStorage;
 
@@ -33,7 +33,7 @@ public class FilmService {
     private final FilmSearchQueryStorage filmSearchQueryStorage;
     private final DirectorService directorService;
     private final DirectorDbStorage directorDbStorage;
-    private final FilmDirectorQueryDbStorage filmDirectorQueryDbStorage;
+    private final FilmDirectorQueryStorage filmDirectorQueryStorage;
     public static final LocalDate BIRTHDAY_OF_CINEMA = LocalDate.of(1895, 12, 28);
 
     public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage,
@@ -43,7 +43,7 @@ public class FilmService {
                        GenreDbStorage genreDbStorage,
                        DirectorService directorService,
                        DirectorDbStorage directorDbStorage,
-                       FilmDirectorQueryDbStorage filmDirectorQueryDbStorage,
+                       FilmDirectorQueryStorage filmDirectorQueryStorage,
                        FilmSearchQueryStorage filmSearchQueryStorage
     ) {
         this.filmStorage = filmStorage;
@@ -53,7 +53,7 @@ public class FilmService {
         this.genreDbStorage = genreDbStorage;
         this.directorService = directorService;
         this.directorDbStorage = directorDbStorage;
-        this.filmDirectorQueryDbStorage = filmDirectorQueryDbStorage;
+        this.filmDirectorQueryStorage = filmDirectorQueryStorage;
         this.filmSearchQueryStorage = filmSearchQueryStorage;
     }
 
@@ -208,7 +208,7 @@ public class FilmService {
 
         log.debug("getFilmsOfDirector, directorId = {}, sortBy = {}", directorId, sortBy);
 
-        List<Film> filmsOfDirector = filmDirectorQueryDbStorage.getFilmsByDirector(directorId, sortBy);
+        List<Film> filmsOfDirector = filmDirectorQueryStorage.getFilmsByDirector(directorId, sortBy);
 
         genreDbStorage.joinGenresToFilms(filmsOfDirector);
         directorDbStorage.joinDirectorsToFilms(filmsOfDirector);
