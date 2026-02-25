@@ -13,8 +13,8 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.director.DirectorDbStorage;
 import ru.yandex.practicum.filmorate.model.DirectorSortBy;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.film.query.FilmSearchQueryDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.query.FilmDirectorQueryDbStorage;
+import ru.yandex.practicum.filmorate.storage.film.query.FilmSearchQueryStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreDbStorage;
 
 import java.time.LocalDate;
@@ -30,7 +30,7 @@ public class FilmService {
     private final UserService userService;
     private final MpaService mpaService;
     private final GenreService genreService;
-    private final FilmSearchQueryDbStorage filmSearchQueryDbStorage;
+    private final FilmSearchQueryStorage filmSearchQueryStorage;
     private final DirectorService directorService;
     private final DirectorDbStorage directorDbStorage;
     private final FilmDirectorQueryDbStorage filmDirectorQueryDbStorage;
@@ -44,7 +44,7 @@ public class FilmService {
                        DirectorService directorService,
                        DirectorDbStorage directorDbStorage,
                        FilmDirectorQueryDbStorage filmDirectorQueryDbStorage,
-                       FilmSearchQueryDbStorage filmSearchQueryDbStorage
+                       FilmSearchQueryStorage filmSearchQueryStorage
     ) {
         this.filmStorage = filmStorage;
         this.userService = userService;
@@ -54,7 +54,7 @@ public class FilmService {
         this.directorService = directorService;
         this.directorDbStorage = directorDbStorage;
         this.filmDirectorQueryDbStorage = filmDirectorQueryDbStorage;
-        this.filmSearchQueryDbStorage = filmSearchQueryDbStorage;
+        this.filmSearchQueryStorage = filmSearchQueryStorage;
     }
 
     public List<Film> all() {
@@ -240,7 +240,7 @@ public class FilmService {
             searchCases.add(searchBy);
         }
 
-        List<Film> foundFilms = filmSearchQueryDbStorage.search(query, searchCases);
+        List<Film> foundFilms = filmSearchQueryStorage.search(query, searchCases);
 
         genreDbStorage.joinGenresToFilms(foundFilms);
         directorDbStorage.joinDirectorsToFilms(foundFilms);
