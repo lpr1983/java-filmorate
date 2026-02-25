@@ -15,7 +15,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 @Repository
-public class RecommendationsDbStorage {
+public class RecommendationsDbStorage implements RecommendationsStorage {
     private final NamedParameterJdbcTemplate jdbc;
     private final RowMapper<Film> mapper;
     private static final String BASE_SELECT_FILMS_QUERY = """
@@ -31,6 +31,7 @@ public class RecommendationsDbStorage {
                 LEFT JOIN mpa_ratings m ON m.id = f.mpa_rating_id
             """;
 
+    @Override
     public List<Film> getRecommendations(int userId) {
         log.info("getRecommendations userId={}", userId);
 

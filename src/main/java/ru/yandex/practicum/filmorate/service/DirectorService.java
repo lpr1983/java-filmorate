@@ -67,7 +67,7 @@ public class DirectorService {
                 .toList();
 
         if (!notFoundIds.isEmpty()) {
-            String errorText = String.format("Не найдены режисеры с идентификаторами: %s", notFoundIds);
+            String errorText = String.format("Не найдены режиссеры с идентификаторами: %s", notFoundIds);
             throw new NotFoundException(errorText);
         }
     }

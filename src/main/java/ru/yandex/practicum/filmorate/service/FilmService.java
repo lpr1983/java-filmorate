@@ -13,8 +13,8 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.director.DirectorDbStorage;
 import ru.yandex.practicum.filmorate.model.DirectorSortBy;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.film.query.FilmSearchQueryDbStorage;
-import ru.yandex.practicum.filmorate.storage.film.query.FilmDirectorQueryDbStorage;
+import ru.yandex.practicum.filmorate.storage.film.query.FilmDirectorQueryStorage;
+import ru.yandex.practicum.filmorate.storage.film.query.FilmSearchQueryStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreDbStorage;
 
 import java.time.LocalDate;
@@ -30,10 +30,10 @@ public class FilmService {
     private final UserService userService;
     private final MpaService mpaService;
     private final GenreService genreService;
-    private final FilmSearchQueryDbStorage filmSearchQueryDbStorage;
+    private final FilmSearchQueryStorage filmSearchQueryStorage;
     private final DirectorService directorService;
     private final DirectorDbStorage directorDbStorage;
-    private final FilmDirectorQueryDbStorage filmDirectorQueryDbStorage;
+    private final FilmDirectorQueryStorage filmDirectorQueryStorage;
     public static final LocalDate BIRTHDAY_OF_CINEMA = LocalDate.of(1895, 12, 28);
 
     public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage,
@@ -43,8 +43,8 @@ public class FilmService {
                        GenreDbStorage genreDbStorage,
                        DirectorService directorService,
                        DirectorDbStorage directorDbStorage,
-                       FilmDirectorQueryDbStorage filmDirectorQueryDbStorage,
-                       FilmSearchQueryDbStorage filmSearchQueryDbStorage
+                       FilmDirectorQueryStorage filmDirectorQueryStorage,
+                       FilmSearchQueryStorage filmSearchQueryStorage
     ) {
         this.filmStorage = filmStorage;
         this.userService = userService;
@@ -53,8 +53,8 @@ public class FilmService {
         this.genreDbStorage = genreDbStorage;
         this.directorService = directorService;
         this.directorDbStorage = directorDbStorage;
-        this.filmDirectorQueryDbStorage = filmDirectorQueryDbStorage;
-        this.filmSearchQueryDbStorage = filmSearchQueryDbStorage;
+        this.filmDirectorQueryStorage = filmDirectorQueryStorage;
+        this.filmSearchQueryStorage = filmSearchQueryStorage;
     }
 
     public List<Film> all() {
@@ -184,6 +184,12 @@ public class FilmService {
             throw new ValidationException("Параметр count должен быть больше 0");
         }
 
+        if (year != null && year < BIRTHDAY_OF_CINEMA.getYear()) {
+            throw new ValidationException(String.format("Год релиза должен быть не раньше %d",
+                    BIRTHDAY_OF_CINEMA.getYear()
+            ));
+        }
+
         // Получаем список популярных фильмов с фильтрацией по жанру и году
         List<Film> popular = filmStorage.getPopular(count, genreId, year);
 
@@ -202,7 +208,7 @@ public class FilmService {
 
         log.debug("getFilmsOfDirector, directorId = {}, sortBy = {}", directorId, sortBy);
 
-        List<Film> filmsOfDirector = filmDirectorQueryDbStorage.getFilmsByDirector(directorId, sortBy);
+        List<Film> filmsOfDirector = filmDirectorQueryStorage.getFilmsByDirector(directorId, sortBy);
 
         genreDbStorage.joinGenresToFilms(filmsOfDirector);
         directorDbStorage.joinDirectorsToFilms(filmsOfDirector);
@@ -234,7 +240,7 @@ public class FilmService {
             searchCases.add(searchBy);
         }
 
-        List<Film> foundFilms = filmSearchQueryDbStorage.search(query, searchCases);
+        List<Film> foundFilms = filmSearchQueryStorage.search(query, searchCases);
 
         genreDbStorage.joinGenresToFilms(foundFilms);
         directorDbStorage.joinDirectorsToFilms(foundFilms);
@@ -256,6 +262,10 @@ public class FilmService {
 
     // Получение фильмов, которые лайкнули оба пользователя
     public List<Film> getCommonFilms(int userId, int friendId) {
+
+        if (userId == friendId) {
+            throw new ValidationException("Совпадают идентификаторы пользователей");
+        }
 
         userService.checkUserExists(userId);
         userService.checkUserExists(friendId);

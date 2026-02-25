@@ -12,10 +12,11 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @Repository
-public class FilmDirectorQueryDbStorage {
-    protected final NamedParameterJdbcTemplate jdbc;
-    protected final RowMapper<Film> mapper;
+public class FilmDirectorQueryDbStorage implements FilmDirectorQueryStorage {
+    private final NamedParameterJdbcTemplate jdbc;
+    private final RowMapper<Film> mapper;
 
+    @Override
     public List<Film> getFilmsByDirector(int directorId, DirectorSortBy sortBy) {
 
         String baseQuery = """

@@ -9,7 +9,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.director.DirectorDbStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreDbStorage;
-import ru.yandex.practicum.filmorate.storage.recommendations.RecommendationsDbStorage;
+import ru.yandex.practicum.filmorate.storage.recommendations.RecommendationsStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
@@ -19,17 +19,17 @@ import java.util.List;
 @Slf4j
 public class UserService {
     private final UserStorage userStorage;
-    private final RecommendationsDbStorage recommendationsDbStorage;
+    private final RecommendationsStorage recommendationsStorage;
     private final GenreDbStorage genreDbStorage;
     private final DirectorDbStorage directorDbStorage;
 
     public UserService(@Qualifier("userDbStorage") UserStorage userStorage,
-                       RecommendationsDbStorage recommendationsDbStorage,
+                       RecommendationsStorage recommendationsStorage,
                        GenreDbStorage genreDbStorage,
                        DirectorDbStorage directorDbStorage
                        ) {
         this.userStorage = userStorage;
-        this.recommendationsDbStorage = recommendationsDbStorage;
+        this.recommendationsStorage = recommendationsStorage;
         this.genreDbStorage = genreDbStorage;
         this.directorDbStorage = directorDbStorage;
     }
@@ -111,7 +111,7 @@ public class UserService {
         log.debug("Recommendations for userId={}", userId);
         checkUserExists(userId);
 
-        List<Film> recommendedFilms = recommendationsDbStorage.getRecommendations(userId);
+        List<Film> recommendedFilms = recommendationsStorage.getRecommendations(userId);
 
         genreDbStorage.joinGenresToFilms(recommendedFilms);
         directorDbStorage.joinDirectorsToFilms(recommendedFilms);

@@ -13,7 +13,7 @@ import java.util.Set;
 
 @RequiredArgsConstructor
 @Repository
-public class FilmSearchQueryDbStorage {
+public class FilmSearchQueryDbStorage implements FilmSearchQueryStorage {
     private final NamedParameterJdbcTemplate jdbc;
     private final RowMapper<Film> mapper;
     private static final String BASE_SELECT_FILMS_QUERY = """
@@ -29,6 +29,7 @@ public class FilmSearchQueryDbStorage {
             LEFT JOIN mpa_ratings m ON m.id = films.mpa_rating_id
             """;
 
+    @Override
     public List<Film> search(String query, Set<FilmSearchBy> by) {
         String sqlQuery;
         if (by.contains(FilmSearchBy.DIRECTOR) && by.contains(FilmSearchBy.TITLE)) {
