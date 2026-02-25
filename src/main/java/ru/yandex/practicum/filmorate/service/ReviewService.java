@@ -46,7 +46,7 @@ public class ReviewService {
         int createdReviewId = reviewStorage.create(review).getReviewId();
 
         Review createdReview = reviewStorage.getById(createdReviewId)
-                .orElseThrow(() -> new DbStorageException("Созденный отзыв не найден в БД, id: " + createdReviewId));
+                .orElseThrow(() -> new DbStorageException("Созданный отзыв не найден в БД, id: " + createdReviewId));
 
         log.info("create review, output object {}", createdReview);
 
