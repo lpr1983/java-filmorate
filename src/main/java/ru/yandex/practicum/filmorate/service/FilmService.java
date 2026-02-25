@@ -184,6 +184,12 @@ public class FilmService {
             throw new ValidationException("Параметр count должен быть больше 0");
         }
 
+        if (year != null && year < BIRTHDAY_OF_CINEMA.getYear()) {
+            throw new ValidationException(String.format("Год релиза должен быть не раньше %d",
+                    BIRTHDAY_OF_CINEMA.getYear()
+            ));
+        }
+
         // Получаем список популярных фильмов с фильтрацией по жанру и году
         List<Film> popular = filmStorage.getPopular(count, genreId, year);
 
