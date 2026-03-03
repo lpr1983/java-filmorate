@@ -22,4 +22,9 @@ public interface FilmStorage {
     void deleteLike(int filmId, int userId);
 
     List<Film> getPopular(int count);
+
+    // Новый метод для топ-N фильмов с фильтрацией
+    List<Film> getPopular(int count, Integer genreId, Integer year);
+
+    List<Film> getCommonFilms(int userId, int friendId);
 }

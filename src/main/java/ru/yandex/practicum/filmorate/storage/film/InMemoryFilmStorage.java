@@ -3,13 +3,7 @@ package ru.yandex.practicum.filmorate.storage.film;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Component("inMemoryFilmStorage")
 public class InMemoryFilmStorage implements FilmStorage {
@@ -71,9 +65,45 @@ public class InMemoryFilmStorage implements FilmStorage {
                 .toList();
     }
 
+    @Override
+    public List<Film> getPopular(int count, Integer genreId, Integer year) {
+        return films.values().stream()
+                // фильтр по жанру
+                .filter(f -> genreId == null || f.getGenres().stream().anyMatch(g -> g.getId() == genreId))
+                // фильтр по году
+                .filter(f -> year == null || f.getReleaseDate().getYear() == year)
+                // сортировка по количеству лайков (убывание)
+                .sorted((f1, f2) -> Integer.compare(
+                        likesByUsers.getOrDefault(f2.getId(), Collections.emptySet()).size(),
+                        likesByUsers.getOrDefault(f1.getId(), Collections.emptySet()).size()
+                ))
+                .limit(count)
+                .toList();
+    }
+
     private int getNextId() {
         nextId++;
         return nextId;
     }
 
+    @Override
+    public List<Film> getCommonFilms(int userId, int friendId) {
+
+        // Проходим по всем фильмам
+        return films.values().stream()
+                // оставляем только те фильмы, которые лайкнули ОБА пользователя
+                .filter(film -> {
+                    Set<Integer> likes = likesByUsers.getOrDefault(
+                            film.getId(),
+                            Collections.emptySet()
+                    );
+                    return likes.contains(userId) && likes.contains(friendId);
+                })
+                // сортируем по популярности (количеству лайков) по убыванию
+                .sorted((f1, f2) -> Integer.compare(
+                        likesByUsers.getOrDefault(f2.getId(), Collections.emptySet()).size(),
+                        likesByUsers.getOrDefault(f1.getId(), Collections.emptySet()).size()
+                ))
+                .toList();
+    }
 }

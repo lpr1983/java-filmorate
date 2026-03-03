@@ -5,7 +5,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.director.DirectorDbStorage;
+import ru.yandex.practicum.filmorate.storage.genre.GenreDbStorage;
+import ru.yandex.practicum.filmorate.storage.recommendations.RecommendationsStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
@@ -15,9 +19,19 @@ import java.util.List;
 @Slf4j
 public class UserService {
     private final UserStorage userStorage;
+    private final RecommendationsStorage recommendationsStorage;
+    private final GenreDbStorage genreDbStorage;
+    private final DirectorDbStorage directorDbStorage;
 
-    public UserService(@Qualifier("userDbStorage") UserStorage userStorage) {
+    public UserService(@Qualifier("userDbStorage") UserStorage userStorage,
+                       RecommendationsStorage recommendationsStorage,
+                       GenreDbStorage genreDbStorage,
+                       DirectorDbStorage directorDbStorage
+                       ) {
         this.userStorage = userStorage;
+        this.recommendationsStorage = recommendationsStorage;
+        this.genreDbStorage = genreDbStorage;
+        this.directorDbStorage = directorDbStorage;
     }
 
     public Collection<User> all() {
@@ -91,6 +105,18 @@ public class UserService {
         checkUsers(userId, otherId);
 
         return userStorage.getCommonFriends(userId, otherId);
+    }
+
+    public List<Film> getRecommendations(int userId) {
+        log.debug("Recommendations for userId={}", userId);
+        checkUserExists(userId);
+
+        List<Film> recommendedFilms = recommendationsStorage.getRecommendations(userId);
+
+        genreDbStorage.joinGenresToFilms(recommendedFilms);
+        directorDbStorage.joinDirectorsToFilms(recommendedFilms);
+
+        return recommendedFilms;
     }
 
     private void checkUsers(int userId, int friendId) {

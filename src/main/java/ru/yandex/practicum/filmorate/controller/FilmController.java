@@ -12,8 +12,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.DirectorSortBy;
+import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.OperationType;
 import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.UserFeedService;
 
 import java.util.Collection;
 import java.util.List;
@@ -22,9 +27,11 @@ import java.util.List;
 @RequestMapping("/films")
 public class FilmController {
     private final FilmService filmService;
+    private final UserFeedService userFeedService;
 
-    public FilmController(FilmService filmService) {
+    public FilmController(FilmService filmService, UserFeedService userFeedService) {
         this.filmService = filmService;
+        this.userFeedService = userFeedService;
     }
 
     @GetMapping("/{id}")
@@ -58,17 +65,45 @@ public class FilmController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addLike(@PathVariable int id, @PathVariable int userId) {
         filmService.addLike(id, userId);
+        userFeedService.saveFeed(userId, id, EventType.LIKE, OperationType.ADD);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(HttpStatus.OK)
     public void deleteLike(@PathVariable int id, @PathVariable int userId) {
         filmService.deleteLike(id, userId);
+        userFeedService.saveFeed(userId, id, EventType.LIKE, OperationType.REMOVE);
     }
 
     @GetMapping("/popular")
-    public List<Film> getPopular(@RequestParam(defaultValue = "10") int count) {
-        return filmService.getPopular(count);
+    public List<Film> getPopular(
+            @RequestParam(defaultValue = "10") int count,
+            @RequestParam(required = false) Integer genreId,
+            @RequestParam(required = false) Integer year) {
+
+        return filmService.getPopular(count, genreId, year);
     }
 
+    @GetMapping("/search")
+    public List<Film> search(@RequestParam String query, @RequestParam String by) {
+        return filmService.search(query, by);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public List<Film> getFilmsOfDirector(
+            @PathVariable int directorId,
+            @RequestParam(defaultValue = "year") String sortBy) {
+
+        DirectorSortBy directorSortBy = DirectorSortBy.from(sortBy)
+                .orElseThrow(() -> new ValidationException("Unknown sortBy: " + sortBy));
+
+        return filmService.getFilmsByDirector(directorId, directorSortBy);
+    }
+
+    @GetMapping("/common")
+    public List<Film> getCommonFilms(
+            @RequestParam int userId,
+            @RequestParam int friendId) {
+        return filmService.getCommonFilms(userId, friendId);
+    }
 }

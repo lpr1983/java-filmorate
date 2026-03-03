@@ -5,6 +5,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
@@ -13,6 +14,7 @@ import ru.yandex.practicum.filmorate.storage.BaseDbStorage;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+
 
 @Repository("filmDbStorage")
 public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
@@ -64,6 +66,10 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             insertFilmGenres(filmToCreate);
         }
 
+        if (filmToCreate.getDirectors() != null) {
+            insertFilmDirectors(filmToCreate);
+        }
+
         return filmToCreate;
     }
 
@@ -90,6 +96,17 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
         if (film.getGenres() != null) {
             insertFilmGenres(film);
+        }
+
+        String deleteFilmDirectorsQuery = """
+                DELETE FROM film_directors
+                WHERE film_id = :film_id
+                """;
+        jdbc.update(deleteFilmDirectorsQuery, new MapSqlParameterSource()
+                .addValue("film_id", film.getId()));
+
+        if (film.getDirectors() != null) {
+            insertFilmDirectors(film);
         }
 
         return film;
@@ -137,21 +154,28 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     @Override
     public List<Film> getPopular(int count) {
-        String popularQuery = BASE_SELECT_FILMS_QUERY
-                + "\n" + """
-                LEFT JOIN
-                    (SELECT l.film_id AS film_id,
-                    COUNT(l.user_id) AS amountOfLikes
-                    FROM likes l
-                    GROUP BY l.film_id) q
-                ON q.film_id = f.id
-                ORDER BY COALESCE(q.amountOfLikes, 0) DESC,
-                         f.id
+        return getPopular(count, null, null);
+    }
+
+    // Новый метод топ-N с фильтрацией по жанру и году
+    @Override
+    public List<Film> getPopular(int count, Integer genreId, Integer year) {
+        String sql = BASE_SELECT_FILMS_QUERY + """
+                 LEFT JOIN likes l ON l.film_id = f.id
+                LEFT JOIN film_genres fg ON fg.film_id = f.id
+                WHERE (:genreId IS NULL OR fg.genre_id = :genreId)
+                  AND (:year IS NULL OR EXTRACT(YEAR FROM f.release_date) = :year)
+                GROUP BY f.id, m.id
+                ORDER BY COUNT(DISTINCT l.user_id) DESC, f.id
                 LIMIT :count
                 """;
-        MapSqlParameterSource params = new MapSqlParameterSource().addValue("count", count);
 
-        return jdbc.query(popularQuery, params, mapper);
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("count", count)
+                .addValue("genreId", genreId)
+                .addValue("year", year);
+
+        return jdbc.query(sql, params, mapper);
     }
 
     private MapSqlParameterSource paramsForCreation(Film film) {
@@ -188,5 +212,41 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
             updateWithCheckResult(insertGenres, genresParams);
         }
+    }
+
+    private void insertFilmDirectors(Film film) {
+        String insertDirectors = """
+                INSERT INTO film_directors(film_id, director_id)
+                VALUES (:film_id, :director_id)
+                """;
+        for (Director director : film.getDirectors()) {
+            MapSqlParameterSource params = new MapSqlParameterSource()
+                    .addValue("film_id", film.getId())
+                    .addValue("director_id", director.getId());
+
+            updateWithCheckResult(insertDirectors, params);
+        }
+    }
+
+    @Override
+    public List<Film> getCommonFilms(int userId, int friendId) {
+
+        // Получаем фильмы, лайкнутые обоими пользователями,
+        // сортируем по популярности
+        String sql = BASE_SELECT_FILMS_QUERY + """
+                JOIN likes l1 ON l1.film_id = f.id
+                JOIN likes l2 ON l2.film_id = f.id
+                LEFT JOIN likes l ON l.film_id = f.id
+                WHERE l1.user_id = :userId
+                  AND l2.user_id = :friendId
+                GROUP BY f.id, m.id
+                ORDER BY COUNT(DISTINCT l.user_id) DESC
+                """;
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("userId", userId)
+                .addValue("friendId", friendId);
+
+        return jdbc.query(sql, params, mapper);
     }
 }
